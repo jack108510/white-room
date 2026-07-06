@@ -3,22 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>White Room</title>
+  <title>Vegas Suite</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { overflow: hidden; background: #fff; }
+    body { overflow: hidden; background: #000; }
     canvas { display: block; }
     #hint {
       position: fixed;
       bottom: 24px;
       left: 50%;
       transform: translateX(-50%);
-      color: #aaa;
+      color: rgba(255,220,120,0.4);
       font-family: system-ui, sans-serif;
       font-size: 13px;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.1em;
       pointer-events: none;
-      transition: opacity 1s;
     }
   </style>
 </head>
@@ -26,157 +25,458 @@
   <div id="hint">drag to look around</div>
 
   <script type="importmap">
-    {
-      "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js"
-      }
-    }
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js" } }
   </script>
 
   <script type="module">
     import * as THREE from 'three';
 
-    // Scene
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xffffff);
+    scene.background = new THREE.Color(0x050408);
 
-    // Camera — eye level in the centre of the room
-    const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 100);
-    camera.position.set(0, 0, 0);
+    const camera = new THREE.PerspectiveCamera(72, innerWidth / innerHeight, 0.05, 60);
+    camera.position.set(0, 0.15, 1.2);
 
-    // Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setPixelRatio(devicePixelRatio);
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     renderer.setSize(innerWidth, innerHeight);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 0.85;
     document.body.appendChild(renderer.domElement);
 
-    // Room dimensions
-    const W = 8, H = 4, D = 8;
-    const half = { w: W / 2, h: H / 2, d: D / 2 };
+    // ── Procedural textures ────────────────────────────────────────────────
 
-    // Shared material — pure white with a hint of warmth
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0xfafafa, roughness: 0.95, metalness: 0 });
-    const floorMat = new THREE.MeshStandardMaterial({ color: 0xf0f0f0, roughness: 0.8, metalness: 0 });
-
-    function addPanel(geo, mat, pos, rot) {
-      const m = new THREE.Mesh(geo, mat);
-      m.position.set(...pos);
-      if (rot) m.rotation.set(...rot);
-      m.receiveShadow = true;
-      scene.add(m);
+    function woodTex() {
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 512;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#1e0f07';
+      ctx.fillRect(0, 0, 512, 512);
+      const pw = 80;
+      for (let x = 0; x < 512; x += pw) {
+        ctx.fillStyle = `rgba(0,0,0,${0.08 + Math.random() * 0.12})`;
+        ctx.fillRect(x, 0, 1.5, 512);
+        for (let i = 0; i < 18; i++) {
+          const y = Math.random() * 512;
+          ctx.strokeStyle = `rgba(80,40,5,${0.04 + Math.random() * 0.09})`;
+          ctx.lineWidth = 0.5 + Math.random();
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + pw, y + (Math.random() - 0.5) * 40);
+          ctx.stroke();
+        }
+        ctx.fillStyle = `rgba(255,180,80,${0.015})`;
+        ctx.fillRect(x, 0, pw, 512);
+      }
+      const t = new THREE.CanvasTexture(c);
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.repeat.set(4, 4);
+      return t;
     }
 
-    const floor  = new THREE.PlaneGeometry(W, D);
-    const wall   = new THREE.PlaneGeometry(W, H);
-    const sideW  = new THREE.PlaneGeometry(D, H);
+    function vegasSkyline() {
+      const c = document.createElement('canvas');
+      c.width = 2048; c.height = 1024;
+      const ctx = c.getContext('2d');
 
-    // Floor
-    addPanel(floor, floorMat, [0, -half.h, 0], [-Math.PI / 2, 0, 0]);
-    // Ceiling
-    addPanel(floor, wallMat,  [0,  half.h, 0], [ Math.PI / 2, 0, 0]);
-    // Front wall
-    addPanel(wall,  wallMat,  [0, 0,  half.d], [0, Math.PI, 0]);
-    // Back wall
-    addPanel(wall,  wallMat,  [0, 0, -half.d], [0, 0, 0]);
-    // Left wall
-    addPanel(sideW, wallMat,  [-half.w, 0, 0], [0,  Math.PI / 2, 0]);
-    // Right wall
-    addPanel(sideW, wallMat,  [ half.w, 0, 0], [0, -Math.PI / 2, 0]);
+      const sky = ctx.createLinearGradient(0, 0, 0, 1024);
+      sky.addColorStop(0, '#00001a');
+      sky.addColorStop(0.55, '#06041e');
+      sky.addColorStop(1, '#160924');
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, 2048, 1024);
 
-    // Soft ambient fill
-    const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-    scene.add(ambient);
+      // stars
+      for (let i = 0; i < 400; i++) {
+        ctx.beginPath();
+        ctx.arc(Math.random() * 2048, Math.random() * 520, Math.random() * 1.4, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${0.2 + Math.random() * 0.8})`;
+        ctx.fill();
+      }
 
-    // Overhead soft light
-    const overhead = new THREE.PointLight(0xffffff, 1.2, 20);
-    overhead.position.set(0, half.h - 0.2, 0);
-    overhead.castShadow = true;
-    overhead.shadow.mapSize.set(1024, 1024);
-    overhead.shadow.radius = 8;
-    scene.add(overhead);
+      // strip light pollution glow
+      const glow = ctx.createRadialGradient(1024, 780, 80, 1024, 780, 600);
+      glow.addColorStop(0, 'rgba(255,130,20,0.35)');
+      glow.addColorStop(0.6, 'rgba(255,60,0,0.08)');
+      glow.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, 2048, 1024);
 
-    // Subtle fill light from below to soften floor shadows
-    const fill = new THREE.PointLight(0xffffff, 0.3, 12);
-    fill.position.set(0, -half.h + 0.3, 0);
-    scene.add(fill);
+      const blds = [
+        [0,   140, 580], [120,  80, 740], [180, 220, 660], [370,  60, 520],
+        [410, 160, 810], [540, 110, 600], [620, 310, 690], [890,  90, 920],
+        [950, 210, 760], [1120, 150, 660],[1240, 110, 830],[1330, 260, 700],
+        [1560,  90, 590],[1620, 190, 740],[1780, 130, 660],[1880, 110, 610],
+        [1950, 100, 570],
+      ];
+      blds.forEach(([bx, bw, bh]) => {
+        const by = 1024 - bh;
+        ctx.fillStyle = `hsl(240,10%,${4 + Math.random() * 4}%)`;
+        ctx.fillRect(bx, by, bw, bh);
+        const cols = Math.floor(bw / 11), rows = Math.floor(bh / 15);
+        for (let col = 0; col < cols; col++) {
+          for (let row = 0; row < rows; row++) {
+            if (Math.random() > 0.38) {
+              const warm = Math.random();
+              ctx.fillStyle = warm > 0.65
+                ? `rgba(255,215,110,${0.55 + Math.random() * 0.45})`
+                : warm > 0.35
+                  ? `rgba(190,225,255,${0.45 + Math.random() * 0.5})`
+                  : `rgba(255,175,70,${0.65 + Math.random() * 0.35})`;
+              ctx.fillRect(bx + col * 11 + 2, by + row * 15 + 3, 7, 9);
+            }
+          }
+        }
+        if (Math.random() > 0.55) {
+          const nc = ['#ff0040','#00ffcc','#ff6600','#cc00ff','#ffcc00'][Math.floor(Math.random()*5)];
+          ctx.shadowColor = nc; ctx.shadowBlur = 18;
+          ctx.fillStyle = nc;
+          ctx.fillRect(bx + bw * 0.15, by + 14, bw * 0.7, 6);
+          ctx.shadowBlur = 0;
+        }
+      });
 
-    // --- Look-around controls (drag only, no pointer lock) ---
-    let yaw = 0, pitch = 0;
-    let isDragging = false;
-    let lastX = 0, lastY = 0;
-    const SPEED = 0.0012;
-    // Limit pitch to ~60° up/down so you can never look straight up or down
-    const PITCH_LIMIT = Math.PI / 3;
+      // ground glow
+      const sg = ctx.createLinearGradient(0, 880, 0, 1024);
+      sg.addColorStop(0, 'rgba(255,110,0,0)');
+      sg.addColorStop(1, 'rgba(255,110,0,0.28)');
+      ctx.fillStyle = sg;
+      ctx.fillRect(0, 880, 2048, 144);
 
-    const canvas = renderer.domElement;
-    canvas.style.cursor = 'grab';
+      // pool below
+      ctx.fillStyle = 'rgba(0,170,255,0.18)';
+      ctx.beginPath();
+      ctx.ellipse(480, 1012, 180, 22, 0, 0, Math.PI * 2);
+      ctx.fill();
 
-    canvas.addEventListener('mousedown', e => {
-      isDragging = true;
-      lastX = e.clientX;
-      lastY = e.clientY;
-      canvas.style.cursor = 'grabbing';
+      return new THREE.CanvasTexture(c);
+    }
+
+    function marbleTex() {
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 512;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#ede9e0';
+      ctx.fillRect(0, 0, 512, 512);
+      for (let i = 0; i < 14; i++) {
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(170,160,140,${0.15 + Math.random() * 0.25})`;
+        ctx.lineWidth = 0.5 + Math.random() * 2;
+        let x = Math.random() * 512;
+        ctx.moveTo(x, 0);
+        for (let j = 0; j < 8; j++) {
+          x += (Math.random() - 0.5) * 90;
+          ctx.lineTo(x, (j + 1) * 64);
+        }
+        ctx.stroke();
+      }
+      const t = new THREE.CanvasTexture(c);
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.repeat.set(3, 3);
+      return t;
+    }
+
+    function abstractArt() {
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 256;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#08080f';
+      ctx.fillRect(0, 0, 512, 256);
+      for (let i = 0; i < 35; i++) {
+        ctx.beginPath();
+        const r = 160 + Math.random() * 95, g = 100 + Math.random() * 80, b = Math.random() * 30;
+        ctx.strokeStyle = `rgba(${r},${g},${b},${0.35 + Math.random() * 0.65})`;
+        ctx.lineWidth = 0.8 + Math.random() * 3.5;
+        ctx.moveTo(Math.random() * 512, Math.random() * 256);
+        ctx.bezierCurveTo(
+          Math.random() * 512, Math.random() * 256,
+          Math.random() * 512, Math.random() * 256,
+          Math.random() * 512, Math.random() * 256
+        );
+        ctx.stroke();
+      }
+      return new THREE.CanvasTexture(c);
+    }
+
+    // ── Materials ─────────────────────────────────────────────────────────
+
+    const wdTex  = woodTex();
+    const skyTex = vegasSkyline();
+    const mbTex  = marbleTex();
+    const artTex = abstractArt();
+
+    const mWood    = new THREE.MeshStandardMaterial({ map: wdTex, roughness: 0.25, metalness: 0.05 });
+    const mWall    = new THREE.MeshStandardMaterial({ color: 0xcec2ae, roughness: 0.92 });
+    const mCeil    = new THREE.MeshStandardMaterial({ color: 0xf2ede5, roughness: 0.95 });
+    const mAccent  = new THREE.MeshStandardMaterial({ color: 0x231510, roughness: 0.85 });
+    const mDark    = new THREE.MeshStandardMaterial({ color: 0x180c06, roughness: 0.4, metalness: 0.08 });
+    const mGold    = new THREE.MeshStandardMaterial({ color: 0xb8930a, roughness: 0.25, metalness: 0.85 });
+    const mLinen   = new THREE.MeshStandardMaterial({ color: 0xfaf7f2, roughness: 0.88 });
+    const mPillow  = new THREE.MeshStandardMaterial({ color: 0xf5f0ea, roughness: 0.9 });
+    const mVelvet  = new THREE.MeshStandardMaterial({ color: 0x180a2a, roughness: 0.97 });
+    const mVSeat   = new THREE.MeshStandardMaterial({ color: 0x200c35, roughness: 0.97 });
+    const mTV      = new THREE.MeshStandardMaterial({ color: 0x040404, roughness: 0.08, metalness: 0.6 });
+    const mScreen  = new THREE.MeshStandardMaterial({ color: 0x001020, emissive: new THREE.Color(0x001828), emissiveIntensity: 0.5, roughness: 0 });
+    const mGlass   = new THREE.MeshStandardMaterial({ color: 0x7aaac8, roughness: 0, metalness: 0.1, opacity: 0.12, transparent: true });
+    const mCurtain = new THREE.MeshStandardMaterial({ color: 0xf0ebe0, roughness: 1, opacity: 0.72, transparent: true, side: THREE.DoubleSide });
+    const mMarble  = new THREE.MeshStandardMaterial({ map: mbTex, roughness: 0.08, metalness: 0.04 });
+    const mShade   = new THREE.MeshStandardMaterial({ color: 0xcca030, roughness: 0.85, emissive: new THREE.Color(0x7a5010), emissiveIntensity: 0.55 });
+    const mLampB   = new THREE.MeshStandardMaterial({ color: 0xc8a428, metalness: 0.75, roughness: 0.2 });
+    const mSky     = new THREE.MeshStandardMaterial({ map: skyTex, emissive: new THREE.Color(0x0a0814), emissiveMap: skyTex, roughness: 1 });
+    const mArt     = new THREE.MeshStandardMaterial({ map: artTex, emissive: new THREE.Color(0x100d04), emissiveMap: artTex });
+    const mRunner  = new THREE.MeshStandardMaterial({ color: 0x1a0828, roughness: 0.95 });
+    const mGoldA   = new THREE.MeshStandardMaterial({ color: 0xc8a820, roughness: 0.75 });
+
+    // ── Helper ────────────────────────────────────────────────────────────
+
+    function box(w, h, d, mat, px, py, pz, ry = 0) {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+      m.position.set(px, py, pz);
+      m.rotation.y = ry;
+      m.castShadow = true;
+      m.receiveShadow = true;
+      scene.add(m);
+      return m;
+    }
+    function cyl(rt, rb, h, seg, mat, px, py, pz) {
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), mat);
+      m.position.set(px, py, pz);
+      m.castShadow = true;
+      scene.add(m);
+      return m;
+    }
+
+    // ── Room shell ────────────────────────────────────────────────────────
+
+    const RW = 10, RH = 3.2, RD = 13;
+    const hw = RW / 2, hh = RH / 2, hd = RD / 2;
+    const F = -hh; // floor Y
+
+    box(RW, 0.05, RD, mWood,   0, F,    0);       // floor
+    box(RW, 0.05, RD, mCeil,   0, hh,   0);       // ceiling
+    box(RW, RH,   0.07, mAccent, 0, 0, hd);       // back accent wall (behind viewer)
+    box(0.07, RH, RD,   mWall, -hw, 0, 0);        // left wall
+    box(0.07, RH, RD,   mWall,  hw, 0, 0);        // right wall
+
+    // Front wall with windows
+    const winH = 2.2, winW = 2.8;
+    const winY = F + 0.5 + winH / 2;
+    box(1.6, RH, 0.07, mWall, -hw + 0.8, 0, -hd);   // left wing
+    box(1.6, RH, 0.07, mWall,  hw - 0.8, 0, -hd);   // right wing
+    box(RW, 0.65, 0.07, mCeil, 0, hh - 0.32, -hd);  // header
+    box(RW, 0.55, 0.07, mWall, 0, F + 0.27, -hd);   // sill
+
+    // Three window panels
+    for (let i = -1; i <= 1; i++) {
+      const wx = i * winW;
+      box(winW - 0.06, winH, 0.015, mSky, wx, winY, -hd + 0.05);
+      box(winW - 0.06, winH, 0.025, mGlass, wx, winY, -hd + 0.09);
+      // frames
+      box(winW, 0.045, 0.09, mGold, wx, winY + winH/2,  -hd + 0.03);
+      box(winW, 0.045, 0.09, mGold, wx, winY - winH/2,  -hd + 0.03);
+      box(0.045, winH, 0.09, mGold, wx - winW/2, winY, -hd + 0.03);
+      box(0.045, winH, 0.09, mGold, wx + winW/2, winY, -hd + 0.03);
+    }
+
+    // Sheer curtains on sides
+    box(1.3, RH, 0.018, mCurtain, -(RW - 4.8)/2 - 0.65, 0, -hd + 0.18);
+    box(1.3, RH, 0.018, mCurtain,  (RW - 4.8)/2 + 0.65, 0, -hd + 0.18);
+
+    // Crown molding
+    const mold = [[0, hh - 0.045, hd - 0.04], [0, hh - 0.045, -hd + 0.04], [-hw + 0.045, hh - 0.045, 0], [hw - 0.045, hh - 0.045, 0]];
+    mold.forEach(([px, py, pz], i) => box(i < 2 ? RW : 0.06, 0.07, i < 2 ? 0.07 : RD, mGold, px, py, pz));
+    // Baseboards
+    box(RW, 0.07, 0.05, mGold, 0, F + 0.035, hd - 0.04);
+    box(RW, 0.07, 0.05, mGold, 0, F + 0.035, -hd + 0.04);
+    box(0.05, 0.07, RD, mGold, -hw + 0.04, F + 0.035, 0);
+    box(0.05, 0.07, RD, mGold,  hw - 0.04, F + 0.035, 0);
+
+    // ── King bed ──────────────────────────────────────────────────────────
+
+    const bx = -2.4, bz = 2.8;
+    box(2.3, 0.28, 3.0, mDark,  bx, F + 0.14, bz);           // frame
+    box(2.1, 0.34, 2.8, mLinen, bx, F + 0.45, bz);           // mattress
+    box(2.1, 0.17, 2.05, mLinen, bx, F + 0.72, bz + 0.2);   // duvet
+    box(2.3, 1.15, 0.13, mDark,  bx, F + 0.87, bz - 1.42);  // headboard
+    box(2.3, 0.04, 0.14, mGold,  bx, F + 1.41, bz - 1.42);  // headboard gold cap
+    // Pillows
+    box(0.72, 0.17, 0.52, mPillow, bx - 0.56, F + 0.72, bz - 0.88);
+    box(0.72, 0.17, 0.52, mPillow, bx + 0.56, F + 0.72, bz - 0.88);
+    box(0.48, 0.14, 0.34, mGoldA,  bx, F + 0.72, bz - 0.65);   // accent pillow
+    box(2.1,  0.06, 0.68, mRunner, bx, F + 0.71, bz + 1.03);   // bed runner
+
+    // ── Nightstands ───────────────────────────────────────────────────────
+
+    function nightstand(nx, nz) {
+      box(0.55, 0.6,  0.48, mDark,   nx, F + 0.3, nz);
+      box(0.53, 0.03, 0.46, mMarble, nx, F + 0.63, nz);
+      box(0.055, 0.32, 0.055, mLampB, nx, F + 0.95, nz);
+      cyl(0.19, 0.12, 0.26, 14, mShade, nx, F + 1.24, nz);
+    }
+    nightstand(bx - 1.28, bz - 0.88);
+    nightstand(bx + 1.28, bz - 0.88);
+
+    // ── Sofa ──────────────────────────────────────────────────────────────
+
+    const sx = 3.0, sz = 0.3;
+    box(2.0, 0.42, 0.75, mVelvet, sx, F + 0.21, sz);
+    box(0.95, 0.17, 0.65, mVSeat, sx - 0.5, F + 0.54, sz);
+    box(0.95, 0.17, 0.65, mVSeat, sx + 0.5, F + 0.54, sz);
+    box(1.88, 0.52, 0.14, mVelvet, sx, F + 0.72, sz - 0.3);
+    // Sofa legs
+    [[-0.9,-0.33],[−0.9,0.33],[0.9,-0.33],[0.9,0.33]].forEach(([ox,oz]) => {
+      box(0.055, 0.1, 0.055, mGold, sx + ox, F + 0.05, sz + oz);
     });
-    window.addEventListener('mouseup', () => {
-      isDragging = false;
-      canvas.style.cursor = 'grab';
+    box(0.26, 0.21, 0.08, mGoldA,  sx - 0.75, F + 0.74, sz - 0.24);
+    box(0.26, 0.21, 0.08, mLinen,  sx + 0.75, F + 0.74, sz - 0.24);
+
+    // Coffee table
+    const ctGlass = new THREE.MeshStandardMaterial({ color: 0x8ab4cc, roughness: 0, metalness: 0.15, opacity: 0.38, transparent: true });
+    box(1.05, 0.04, 0.58, ctGlass, sx, F + 0.42, sz + 0.72);
+    box(1.05, 0.04, 0.58, mGold,   sx, F + 0.44, sz + 0.72);
+    [[-0.46,-0.23],[0.46,-0.23],[-0.46,0.23],[0.46,0.23]].forEach(([ox,oz]) => {
+      box(0.04, 0.38, 0.04, mGold, sx + ox, F + 0.19, sz + 0.72 + oz);
     });
+
+    // ── TV console ────────────────────────────────────────────────────────
+
+    const tz = hd - 0.12;
+    box(3.2, 0.52, 0.52, mDark,  0, F + 0.26, tz - 0.29);
+    box(3.2, 0.03, 0.52, mGold,  0, F + 0.535, tz - 0.29);
+    box(2.6, 1.42, 0.065, mTV,   0, F + 1.38, tz - 0.065);
+    box(2.5, 1.34, 0.04,  mScreen, 0, F + 1.38, tz - 0.04);
+
+    // ── Desk area ─────────────────────────────────────────────────────────
+
+    box(1.25, 0.045, 0.64, mMarble, -3.75, F + 0.76, -0.55);
+    [[-0.56,-0.27],[-0.56,0.27],[0.56,-0.27],[0.56,0.27]].forEach(([ox,oz]) => {
+      box(0.045, 0.76, 0.045, mGold, -3.75 + ox, F + 0.38, -0.55 + oz);
+    });
+    // Desk chair suggestion
+    box(0.58, 0.08, 0.55, mVelvet, -3.75, F + 0.46, 0.15);
+    box(0.56, 0.48, 0.1,  mVelvet, -3.75, F + 0.72, -0.12);
+    [[-0.26,-0.22],[0.26,-0.22],[-0.26,0.22],[0.26,0.22]].forEach(([ox,oz]) => {
+      box(0.04, 0.46, 0.04, mGold, -3.75 + ox, F + 0.23, 0.15 + oz);
+    });
+
+    // ── Floor lamp ────────────────────────────────────────────────────────
+
+    box(0.055, 1.65, 0.055, mGold, 3.8, F + 0.825, -2.2);
+    cyl(0.32, 0.19, 0.4, 16, mShade, 3.8, F + 1.82, -2.2);
+
+    // ── Wall art (accent wall) ────────────────────────────────────────────
+
+    box(2.4, 1.15, 0.04, mArt, 0, 0.22, hd - 0.06);
+    box(2.48, 0.04, 0.07, mGold, 0,  0.8,  hd - 0.04);
+    box(2.48, 0.04, 0.07, mGold, 0, -0.35, hd - 0.04);
+    box(0.04, 1.23, 0.07, mGold, -1.24, 0.22, hd - 0.04);
+    box(0.04, 1.23, 0.07, mGold,  1.24, 0.22, hd - 0.04);
+
+    // Side wall art (left)
+    const sideArtTex = abstractArt();
+    const mSideArt = new THREE.MeshStandardMaterial({ map: sideArtTex, emissive: new THREE.Color(0x0c0a02), emissiveMap: sideArtTex });
+    box(1.4, 0.8, 0.04, mSideArt, -hw + 0.06, 0.3, -1.2, Math.PI / 2);
+    box(0.04, 0.88, 0.07, mGold, -hw + 0.06, 0.3, -1.2 - 0.72, Math.PI / 2);
+    box(0.04, 0.88, 0.07, mGold, -hw + 0.06, 0.3, -1.2 + 0.72, Math.PI / 2);
+    box(1.48, 0.04, 0.07, mGold, -hw + 0.06,  0.74, -1.2, Math.PI / 2);
+    box(1.48, 0.04, 0.07, mGold, -hw + 0.06, -0.14, -1.2, Math.PI / 2);
+
+    // ── Chandelier ────────────────────────────────────────────────────────
+
+    cyl(0.13, 0.09, 0.28, 18, mGold, 0, hh - 0.16, 0);
+    box(0.04, 0.55, 0.04, mGold, 0, hh - 0.08, 0);
+    // arms
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      const ax = Math.cos(a) * 0.32, az = Math.sin(a) * 0.32;
+      box(0.025, 0.025, 0.68, mGold, ax * 0.5, hh - 0.38, az * 0.5, a);
+      cyl(0.045, 0.03, 0.1, 8, mShade, ax, hh - 0.5, az);
+    }
+
+    // ── Lighting ──────────────────────────────────────────────────────────
+
+    scene.add(new THREE.AmbientLight(0x251c0e, 0.7));
+
+    // Chandelier
+    const chanLight = new THREE.PointLight(0xffe090, 2.8, 14);
+    chanLight.position.set(0, hh - 0.38, 0);
+    chanLight.castShadow = true;
+    chanLight.shadow.mapSize.set(1024, 1024);
+    chanLight.shadow.radius = 8;
+    scene.add(chanLight);
+
+    // Bedside lamps
+    const bl1 = new THREE.PointLight(0xffcc60, 0.9, 4);
+    bl1.position.set(bx - 1.28, F + 1.32, bz - 0.88);
+    scene.add(bl1);
+    const bl2 = new THREE.PointLight(0xffcc60, 0.9, 4);
+    bl2.position.set(bx + 1.28, F + 1.32, bz - 0.88);
+    scene.add(bl2);
+
+    // Floor lamp
+    const fl = new THREE.PointLight(0xffbb44, 1.1, 5.5);
+    fl.position.set(3.8, F + 1.82, -2.2);
+    scene.add(fl);
+
+    // City glow from windows
+    const cityGlow = new THREE.PointLight(0x1a3468, 0.7, 9);
+    cityGlow.position.set(0, winY, -hd + 1.4);
+    scene.add(cityGlow);
+
+    // Soft fill bounce from floor
+    const bounce = new THREE.PointLight(0x3a2510, 0.4, 8);
+    bounce.position.set(0, F + 0.2, 0);
+    scene.add(bounce);
+
+    // ── Controls ──────────────────────────────────────────────────────────
+
+    let yaw = Math.PI * 0.92, pitch = 0;
+    let isDragging = false, lastX = 0, lastY = 0;
+    const SPEED = 0.0012, PLIMIT = Math.PI / 3;
+
+    const cv = renderer.domElement;
+    cv.style.cursor = 'grab';
+
+    cv.addEventListener('mousedown', e => {
+      isDragging = true; lastX = e.clientX; lastY = e.clientY;
+      cv.style.cursor = 'grabbing';
+    });
+    window.addEventListener('mouseup', () => { isDragging = false; cv.style.cursor = 'grab'; });
     window.addEventListener('mousemove', e => {
       if (!isDragging) return;
       yaw   -= (e.clientX - lastX) * SPEED;
       pitch -= (e.clientY - lastY) * SPEED;
-      pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, pitch));
-      lastX = e.clientX;
-      lastY = e.clientY;
+      pitch = Math.max(-PLIMIT, Math.min(PLIMIT, pitch));
+      lastX = e.clientX; lastY = e.clientY;
     });
-
-    // Touch drag
-    canvas.addEventListener('touchstart', e => {
-      isDragging = true;
-      lastX = e.touches[0].clientX;
-      lastY = e.touches[0].clientY;
+    cv.addEventListener('touchstart', e => {
+      isDragging = true; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
     }, { passive: true });
     window.addEventListener('touchend', () => isDragging = false);
     window.addEventListener('touchmove', e => {
       if (!isDragging) return;
       yaw   -= (e.touches[0].clientX - lastX) * SPEED;
       pitch -= (e.touches[0].clientY - lastY) * SPEED;
-      pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, pitch));
-      lastX = e.touches[0].clientX;
-      lastY = e.touches[0].clientY;
+      pitch = Math.max(-PLIMIT, Math.min(PLIMIT, pitch));
+      lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
     }, { passive: true });
 
-    // Resize
     window.addEventListener('resize', () => {
       camera.aspect = innerWidth / innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(innerWidth, innerHeight);
     });
 
-    // Slow idle drift when not interacting
-    let idleTime = 0;
-
-    function applyLook() {
+    // Idle drift
+    let idleT = 0;
+    function animate(now) {
+      requestAnimationFrame(animate);
+      if (!isDragging) { idleT += 0.00015; yaw += Math.sin(idleT) * 0.00018; }
       const q = new THREE.Quaternion();
       q.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ'));
       camera.quaternion.copy(q);
-    }
-
-    // Render loop
-    let last = performance.now();
-    function animate(now) {
-      requestAnimationFrame(animate);
-      const dt = (now - last) / 1000;
-      last = now;
-
-      if (!isDragging) {
-        idleTime += dt * 0.04; // very slow drift
-        yaw += Math.sin(idleTime) * 0.0003;
-      }
-
-      applyLook();
       renderer.render(scene, camera);
     }
     animate(performance.now());
