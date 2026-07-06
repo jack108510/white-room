@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>White Room</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { overflow: hidden; background: #fff; }
+    canvas { display: block; }
+    #hint {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #aaa;
+      font-family: system-ui, sans-serif;
+      font-size: 13px;
+      letter-spacing: 0.05em;
+      pointer-events: none;
+      transition: opacity 1s;
+    }
+  </style>
+</head>
+<body>
+  <div id="hint">click to look around &nbsp;·&nbsp; drag to rotate</div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+
+    // Scene
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+
+    // Camera — eye level in the centre of the room
+    const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 100);
+    camera.position.set(0, 0, 0);
+
+    // Renderer
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(devicePixelRatio);
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.body.appendChild(renderer.domElement);
+
+    // Room dimensions
+    const W = 8, H = 4, D = 8;
+    const half = { w: W / 2, h: H / 2, d: D / 2 };
+
+    // Shared material — pure white with a hint of warmth
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0xfafafa, roughness: 0.95, metalness: 0 });
+    const floorMat = new THREE.MeshStandardMaterial({ color: 0xf0f0f0, roughness: 0.8, metalness: 0 });
+
+    function addPanel(geo, mat, pos, rot) {
+      const m = new THREE.Mesh(geo, mat);
+      m.position.set(...pos);
+      if (rot) m.rotation.set(...rot);
+      m.receiveShadow = true;
+      scene.add(m);
+    }
+
+    const floor  = new THREE.PlaneGeometry(W, D);
+    const wall   = new THREE.PlaneGeometry(W, H);
+    const sideW  = new THREE.PlaneGeometry(D, H);
+
+    // Floor
+    addPanel(floor, floorMat, [0, -half.h, 0], [-Math.PI / 2, 0, 0]);
+    // Ceiling
+    addPanel(floor, wallMat,  [0,  half.h, 0], [ Math.PI / 2, 0, 0]);
+    // Front wall
+    addPanel(wall,  wallMat,  [0, 0,  half.d], [0, Math.PI, 0]);
+    // Back wall
+    addPanel(wall,  wallMat,  [0, 0, -half.d], [0, 0, 0]);
+    // Left wall
+    addPanel(sideW, wallMat,  [-half.w, 0, 0], [0,  Math.PI / 2, 0]);
+    // Right wall
+    addPanel(sideW, wallMat,  [ half.w, 0, 0], [0, -Math.PI / 2, 0]);
+
+    // Soft ambient fill
+    const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambient);
+
+    // Overhead soft light
+    const overhead = new THREE.PointLight(0xffffff, 1.2, 20);
+    overhead.position.set(0, half.h - 0.2, 0);
+    overhead.castShadow = true;
+    overhead.shadow.mapSize.set(1024, 1024);
+    overhead.shadow.radius = 8;
+    scene.add(overhead);
+
+    // Subtle fill light from below to soften floor shadows
+    const fill = new THREE.PointLight(0xffffff, 0.3, 12);
+    fill.position.set(0, -half.h + 0.3, 0);
+    scene.add(fill);
+
+    // --- Look-around controls ---
+    let yaw = 0, pitch = 0;
+    let isDragging = false;
+    let lastX = 0, lastY = 0;
+    const SPEED = 0.003;
+    const PITCH_LIMIT = Math.PI / 2 - 0.05;
+
+    // Mouse drag
+    renderer.domElement.addEventListener('mousedown', e => {
+      isDragging = true;
+      lastX = e.clientX;
+      lastY = e.clientY;
+    });
+    window.addEventListener('mouseup', () => isDragging = false);
+    window.addEventListener('mousemove', e => {
+      if (!isDragging) return;
+      yaw   -= (e.clientX - lastX) * SPEED;
+      pitch -= (e.clientY - lastY) * SPEED;
+      pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, pitch));
+      lastX = e.clientX;
+      lastY = e.clientY;
+    });
+
+    // Touch drag
+    renderer.domElement.addEventListener('touchstart', e => {
+      isDragging = true;
+      lastX = e.touches[0].clientX;
+      lastY = e.touches[0].clientY;
+    }, { passive: true });
+    window.addEventListener('touchend', () => isDragging = false);
+    window.addEventListener('touchmove', e => {
+      if (!isDragging) return;
+      yaw   -= (e.touches[0].clientX - lastX) * SPEED;
+      pitch -= (e.touches[0].clientY - lastY) * SPEED;
+      pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, pitch));
+      lastX = e.touches[0].clientX;
+      lastY = e.touches[0].clientY;
+    }, { passive: true });
+
+    // Pointer lock for click-to-look
+    renderer.domElement.addEventListener('click', () => {
+      renderer.domElement.requestPointerLock?.();
+    });
+    document.addEventListener('pointerlockchange', () => {
+      if (document.pointerLockElement === renderer.domElement) {
+        document.getElementById('hint').style.opacity = '0';
+      } else {
+        document.getElementById('hint').style.opacity = '1';
+      }
+    });
+    document.addEventListener('mousemove', e => {
+      if (document.pointerLockElement !== renderer.domElement) return;
+      yaw   -= e.movementX * SPEED;
+      pitch -= e.movementY * SPEED;
+      pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, pitch));
+    });
+
+    // Resize
+    window.addEventListener('resize', () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    });
+
+    // Slow idle drift when not interacting
+    let idleTime = 0;
+
+    function applyLook() {
+      const q = new THREE.Quaternion();
+      q.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ'));
+      camera.quaternion.copy(q);
+    }
+
+    // Render loop
+    let last = performance.now();
+    function animate(now) {
+      requestAnimationFrame(animate);
+      const dt = (now - last) / 1000;
+      last = now;
+
+      if (!isDragging && document.pointerLockElement !== renderer.domElement) {
+        idleTime += dt * 0.04; // very slow drift
+        yaw += Math.sin(idleTime) * 0.0003;
+      }
+
+      applyLook();
+      renderer.render(scene, camera);
+    }
+    animate(performance.now());
+  </script>
+</body>
+</html>
