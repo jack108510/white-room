@@ -23,7 +23,7 @@
   </style>
 </head>
 <body>
-  <div id="hint">click to look around &nbsp;·&nbsp; drag to rotate</div>
+  <div id="hint">drag to look around</div>
 
   <script type="importmap">
     {
@@ -102,20 +102,27 @@
     fill.position.set(0, -half.h + 0.3, 0);
     scene.add(fill);
 
-    // --- Look-around controls ---
+    // --- Look-around controls (drag only, no pointer lock) ---
     let yaw = 0, pitch = 0;
     let isDragging = false;
     let lastX = 0, lastY = 0;
-    const SPEED = 0.003;
-    const PITCH_LIMIT = Math.PI / 2 - 0.05;
+    const SPEED = 0.0012;
+    // Limit pitch to ~60° up/down so you can never look straight up or down
+    const PITCH_LIMIT = Math.PI / 3;
 
-    // Mouse drag
-    renderer.domElement.addEventListener('mousedown', e => {
+    const canvas = renderer.domElement;
+    canvas.style.cursor = 'grab';
+
+    canvas.addEventListener('mousedown', e => {
       isDragging = true;
       lastX = e.clientX;
       lastY = e.clientY;
+      canvas.style.cursor = 'grabbing';
     });
-    window.addEventListener('mouseup', () => isDragging = false);
+    window.addEventListener('mouseup', () => {
+      isDragging = false;
+      canvas.style.cursor = 'grab';
+    });
     window.addEventListener('mousemove', e => {
       if (!isDragging) return;
       yaw   -= (e.clientX - lastX) * SPEED;
@@ -126,7 +133,7 @@
     });
 
     // Touch drag
-    renderer.domElement.addEventListener('touchstart', e => {
+    canvas.addEventListener('touchstart', e => {
       isDragging = true;
       lastX = e.touches[0].clientX;
       lastY = e.touches[0].clientY;
@@ -140,24 +147,6 @@
       lastX = e.touches[0].clientX;
       lastY = e.touches[0].clientY;
     }, { passive: true });
-
-    // Pointer lock for click-to-look
-    renderer.domElement.addEventListener('click', () => {
-      renderer.domElement.requestPointerLock?.();
-    });
-    document.addEventListener('pointerlockchange', () => {
-      if (document.pointerLockElement === renderer.domElement) {
-        document.getElementById('hint').style.opacity = '0';
-      } else {
-        document.getElementById('hint').style.opacity = '1';
-      }
-    });
-    document.addEventListener('mousemove', e => {
-      if (document.pointerLockElement !== renderer.domElement) return;
-      yaw   -= e.movementX * SPEED;
-      pitch -= e.movementY * SPEED;
-      pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, pitch));
-    });
 
     // Resize
     window.addEventListener('resize', () => {
@@ -182,7 +171,7 @@
       const dt = (now - last) / 1000;
       last = now;
 
-      if (!isDragging && document.pointerLockElement !== renderer.domElement) {
+      if (!isDragging) {
         idleTime += dt * 0.04; // very slow drift
         yaw += Math.sin(idleTime) * 0.0003;
       }
