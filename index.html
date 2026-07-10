@@ -13,16 +13,77 @@
       bottom: 24px;
       left: 50%;
       transform: translateX(-50%);
-      color: rgba(235, 210, 160, 0.45);
+      color: rgba(235, 210, 160, 0.62);
       font-family: system-ui, sans-serif;
-      font-size: 13px;
-      letter-spacing: 0.14em;
+      font-size: 12px;
+      letter-spacing: 0.12em;
       pointer-events: none;
+      text-align: center;
+      text-shadow: 0 2px 10px #000;
     }
+    #hotspots {
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      z-index: 5;
+    }
+    .spotBtn {
+      border: 1px solid rgba(230,200,140,0.45);
+      color: rgba(255,238,190,0.9);
+      background: rgba(8,14,20,0.5);
+      backdrop-filter: blur(8px);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font: 600 11px system-ui, sans-serif;
+      letter-spacing: .08em;
+      cursor: pointer;
+      box-shadow: 0 8px 28px rgba(0,0,0,.25);
+    }
+    .spotBtn:hover { background: rgba(60,45,25,0.72); }
+    #walkpad {
+      position: fixed;
+      left: 18px;
+      bottom: 24px;
+      width: 132px;
+      height: 132px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 6px;
+      z-index: 5;
+      opacity: .82;
+      user-select: none;
+    }
+    .padBtn {
+      border: 1px solid rgba(230,200,140,0.35);
+      border-radius: 14px;
+      color: rgba(255,238,190,0.92);
+      background: rgba(8,14,20,0.48);
+      backdrop-filter: blur(8px);
+      font: 700 18px system-ui, sans-serif;
+      touch-action: none;
+    }
+    .padBtn:active { background: rgba(190,145,65,0.55); }
+    .padEmpty { pointer-events: none; opacity: 0; }
+    @media (min-width: 800px) { #walkpad { opacity: .55; } }
   </style>
 </head>
 <body>
-  <div id="hint">drag to look around the salon</div>
+  <div id="hotspots">
+    <button class="spotBtn" data-x="0" data-z="1.1" data-yaw="0">SALON</button>
+    <button class="spotBtn" data-x="0" data-z="8.5" data-yaw="0">AFT PASSAGE</button>
+    <button class="spotBtn" data-x="0" data-z="14.1" data-yaw="0">OWNER SUITE</button>
+    <button class="spotBtn" data-x="0" data-z="20.0" data-yaw="3.1416">OPEN DECK</button>
+  </div>
+  <div id="walkpad" aria-label="Walk controls">
+    <div class="padEmpty"></div><button class="padBtn" data-key="forward">▲</button><div class="padEmpty"></div>
+    <button class="padBtn" data-key="left">◀</button><button class="padBtn" data-key="boost">◆</button><button class="padBtn" data-key="right">▶</button>
+    <div class="padEmpty"></div><button class="padBtn" data-key="back">▼</button><div class="padEmpty"></div>
+  </div>
+  <div id="hint">drag to look · WASD / arrows to walk · shift for speed · tap location bubbles</div>
 
   <script type="importmap">
     {
@@ -472,7 +533,12 @@
 
     box(0.08, RH, 8, mHull, -hw, 0, 1.5);                   // port wall
     box(0.08, RH, 8, mHull,  hw, 0, 1.5);                   // starboard wall
-    box(RW, RH, 0.1, mPanel, 0, 0, STERN);                  // aft teak bulkhead
+    box(2.45, RH, 0.1, mPanel, -2.78, 0, STERN);                // aft teak bulkhead, port side
+    box(2.45, RH, 0.1, mPanel,  2.78, 0, STERN);                // aft teak bulkhead, starboard side
+    box(2.0, 0.42, 0.1, mPanel, 0, 1.13, STERN);                // low header above walk-through doorway
+    box(0.08, 1.95, 0.12, mBrass, -1.15, -0.25, STERN - 0.02);  // doorway brass jamb
+    box(0.08, 1.95, 0.12, mBrass,  1.15, -0.25, STERN - 0.02);
+    box(2.25, 0.06, 0.12, mBrass, 0, 0.78, STERN - 0.02)
 
     // Curved bow wall: cream sill and header with a wraparound window band
     const sillTop = F + 0.7, winTop = F + 2.0;
@@ -719,6 +785,75 @@
       box(0.13, 0.13, 0.125, mNavy, -2.2 + Math.cos(a) * 0.26, 0.45 + Math.sin(a) * 0.26, STERN - 0.12);
     }
 
+
+    // ── Walkable aft ship extension: passage, owner suite, open deck ───────
+
+    function addDoorLabel(text, x, y, z) {
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 128;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = 'rgba(20,18,14,0.82)'; ctx.fillRect(0, 0, 512, 128);
+      ctx.strokeStyle = 'rgba(220,185,110,0.9)'; ctx.lineWidth = 6; ctx.strokeRect(8, 8, 496, 112);
+      ctx.fillStyle = '#f7ddb0'; ctx.font = '600 44px Georgia'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(text, 256, 66);
+      const mat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true });
+      const sign = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.23), mat);
+      sign.position.set(x, y, z);
+      sign.rotation.y = Math.PI;
+      scene.add(sign);
+    }
+
+    // Aft passage — narrower yacht corridor with portholes and LED toe-kicks
+    box(3.0, 0.06, 6.0, mTeakF, 0, F, 8.4);
+    box(3.0, 0.06, 6.0, mCeil, 0, hh, 8.4);
+    box(0.08, RH, 6.0, mHull, -1.5, 0, 8.4);
+    box(0.08, RH, 6.0, mHull,  1.5, 0, 8.4);
+    box(0.03, 0.05, 5.7, mChrome, -1.43, F + 0.72, 8.4);
+    box(0.03, 0.05, 5.7, mChrome,  1.43, F + 0.72, 8.4);
+    box(0.025, 0.02, 5.6, mLED, -1.38, F + 0.09, 8.4).castShadow = false;
+    box(0.025, 0.02, 5.6, mLED,  1.38, F + 0.09, 8.4).castShadow = false;
+    [6.4, 8.2, 10.0].forEach(z => { porthole(-1, z); porthole(1, z); box(1.9, 0.05, 0.11, mTeak, 0, hh - 0.08, z); });
+    box(2.1, 0.04, 0.08, mBrass, 0, 0.9, 11.25);
+    addDoorLabel('OWNER SUITE', 0, 0.96, 11.22);
+
+    // Owner suite: larger private lounge forward of a bed wall, with ocean glass
+    box(6.6, 0.06, 6.2, mTeakF, 0, F, 14.55);
+    box(6.6, 0.06, 6.2, mCeil, 0, hh, 14.55);
+    box(0.08, RH, 6.2, mHull, -3.3, 0, 14.55);
+    box(0.08, RH, 6.2, mHull,  3.3, 0, 14.55);
+    box(6.6, RH, 0.08, mGlass, 0, 0.0, 17.65);                 // panoramic stern glass
+    box(6.7, 0.07, 0.08, mBrass, 0, F + 0.78, 17.61);
+    box(6.7, 0.07, 0.08, mBrass, 0, F + 2.0, 17.61);
+    const sternSea = box(6.9, 2.2, 0.04, mSea, 0, 0.05, 17.9); sternSea.castShadow = false;
+    // Bed / chaise wall and private writing desk
+    box(2.45, 0.38, 1.2, mTeak, -1.45, F + 0.2, 14.6);
+    cushion(2.5, 0.18, 1.25, mCream, -1.45, F + 0.52, 14.6);
+    cushion(0.55, 0.42, 0.16, mNavy, -2.15, F + 0.72, 14.2, 0.25);
+    cushion(0.55, 0.42, 0.16, mGold, -0.85, F + 0.72, 14.25, -0.2);
+    box(1.25, 0.78, 0.58, mOnyx, 2.15, F + 0.39, 14.6);
+    box(1.3, 0.035, 0.62, mMarble, 2.15, F + 0.82, 14.6);
+    cyl(0.045, 0.07, 0.4, 14, mBrass, 1.8, F + 1.04, 14.55);
+    cyl(0.16, 0.11, 0.18, 18, mShade, 1.8, F + 1.3, 14.55);
+    box(0.04, 0.04, 5.9, mLED, -3.05, hh - 0.12, 14.55).castShadow = false;
+    box(0.04, 0.04, 5.9, mLED,  3.05, hh - 0.12, 14.55).castShadow = false;
+    [13.2, 15.3].forEach(z => { porthole(-1, z); porthole(1, z); });
+    addDoorLabel('PRIVATE AFT DECK', 0, 0.95, 17.45);
+
+    // Open aft deck with rails, loungers and sea beyond — reachable by walking through suite glass line
+    box(7.4, 0.06, 4.6, mTeakF, 0, F, 20.25);
+    box(0.08, 0.9, 4.4, mBrass, -3.65, F + 0.45, 20.25);
+    box(0.08, 0.9, 4.4, mBrass,  3.65, F + 0.45, 20.25);
+    box(7.2, 0.08, 0.08, mBrass, 0, F + 0.9, 22.5);
+    for (let x = -3.2; x <= 3.21; x += 0.8) cyl(0.025, 0.025, 0.9, 8, mBrass, x, F + 0.45, 22.5);
+    for (const x of [-1.25, 1.25]) {
+      box(1.0, 0.22, 1.75, mCream, x, F + 0.2, 20.55, x * 0.08);
+      cushion(0.9, 0.18, 0.72, mNavy, x, F + 0.45, 19.9, x * 0.08);
+      box(0.8, 0.04, 0.5, mGold, x, F + 0.48, 21.25, x * 0.08);
+    }
+    cyl(0.45, 0.5, 0.06, 24, mMarble, 0, F + 0.44, 20.35);
+    cyl(0.04, 0.04, 0.35, 10, mChrome, 0, F + 0.25, 20.35);
+    const aftSea = box(11, 3, 0.04, mSea, 0, 0.2, 24.8); aftSea.castShadow = false;
+
     // ── Overhead: beams, downlights, bow pendant ──────────────────────────
 
     [-1.4, 0.6, 2.6, 4.6].forEach(z => box(RW - 0.3, 0.08, 0.16, mTeak, 0, hh - 0.06, z));
@@ -794,53 +929,130 @@
     coveWR.position.set(3.2, hh - 0.25, 1.5);
     scene.add(coveWL, coveWR);
 
-    // ── Controls (drag to look) ───────────────────────────────────────────
+    // ── Controls: drag-to-look + first-person walk + location bubbles ──
 
     let yaw = 0, pitch = 0;
     let isDragging = false, lastX = 0, lastY = 0;
     const SPEED = 0.0012, PLIMIT = Math.PI / 3;
+    const EYE_Y = 0.28;
+    const keys = { forward: false, back: false, left: false, right: false, boost: false };
+    let targetSpot = null;
 
     const cv = renderer.domElement;
     cv.style.cursor = 'grab';
 
-    cv.addEventListener('mousedown', e => {
-      isDragging = true; lastX = e.clientX; lastY = e.clientY;
-      cv.style.cursor = 'grabbing';
-    });
-    window.addEventListener('mouseup', () => { isDragging = false; cv.style.cursor = 'grab'; });
-    window.addEventListener('mousemove', e => {
+    function beginLook(x, y) { isDragging = true; lastX = x; lastY = y; cv.style.cursor = 'grabbing'; }
+    function moveLook(x, y) {
       if (!isDragging) return;
-      yaw   -= (e.clientX - lastX) * SPEED;
-      pitch -= (e.clientY - lastY) * SPEED;
+      yaw   -= (x - lastX) * SPEED;
+      pitch -= (y - lastY) * SPEED;
       pitch = Math.max(-PLIMIT, Math.min(PLIMIT, pitch));
-      lastX = e.clientX; lastY = e.clientY;
-    });
+      lastX = x; lastY = y;
+    }
+    cv.addEventListener('mousedown', e => beginLook(e.clientX, e.clientY));
+    window.addEventListener('mouseup', () => { isDragging = false; cv.style.cursor = 'grab'; });
+    window.addEventListener('mousemove', e => moveLook(e.clientX, e.clientY));
     cv.addEventListener('touchstart', e => {
-      isDragging = true; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+      if (e.target.closest('#walkpad, #hotspots')) return;
+      beginLook(e.touches[0].clientX, e.touches[0].clientY);
     }, { passive: true });
     window.addEventListener('touchend', () => isDragging = false);
     window.addEventListener('touchmove', e => {
-      if (!isDragging) return;
-      yaw   -= (e.touches[0].clientX - lastX) * SPEED;
-      pitch -= (e.touches[0].clientY - lastY) * SPEED;
-      pitch = Math.max(-PLIMIT, Math.min(PLIMIT, pitch));
-      lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+      if (e.target.closest('#walkpad, #hotspots')) return;
+      moveLook(e.touches[0].clientX, e.touches[0].clientY);
     }, { passive: true });
 
+    function setMove(code, on) {
+      if (code === 'KeyW' || code === 'ArrowUp') keys.forward = on;
+      if (code === 'KeyS' || code === 'ArrowDown') keys.back = on;
+      if (code === 'KeyA' || code === 'ArrowLeft') keys.left = on;
+      if (code === 'KeyD' || code === 'ArrowRight') keys.right = on;
+      if (code === 'ShiftLeft' || code === 'ShiftRight') keys.boost = on;
+    }
+    window.addEventListener('keydown', e => { setMove(e.code, true); if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault(); });
+    window.addEventListener('keyup', e => setMove(e.code, false));
+
+    document.querySelectorAll('.padBtn').forEach(btn => {
+      const k = btn.dataset.key;
+      const on = e => { e.preventDefault(); keys[k] = true; targetSpot = null; };
+      const off = e => { e.preventDefault(); keys[k] = false; };
+      btn.addEventListener('pointerdown', on);
+      btn.addEventListener('pointerup', off);
+      btn.addEventListener('pointerleave', off);
+      btn.addEventListener('pointercancel', off);
+    });
+
+    document.querySelectorAll('.spotBtn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        targetSpot = { x: parseFloat(btn.dataset.x), z: parseFloat(btn.dataset.z), yaw: parseFloat(btn.dataset.yaw) };
+      });
+    });
+
+    // Soft path bounds: salon -> passage -> owner suite -> open aft deck.
+    function clampWalk(pos) {
+      let x = pos.x, z = pos.z;
+      if (z < 5.35) {                    // salon + bow
+        z = Math.max(-5.85, Math.min(5.35, z));
+        const bowLimit = z < -2.35 ? Math.sqrt(Math.max(0.2, 3.45 * 3.45 - (z + 2.35) * (z + 2.35))) : 3.45;
+        x = Math.max(-bowLimit, Math.min(bowLimit, x));
+      } else if (z < 11.35) {            // narrow aft passage
+        z = Math.max(5.35, Math.min(11.35, z));
+        x = Math.max(-1.12, Math.min(1.12, x));
+      } else if (z < 17.75) {            // owner suite
+        z = Math.max(11.35, Math.min(17.75, z));
+        x = Math.max(-2.85, Math.min(2.85, x));
+      } else {                            // open deck
+        z = Math.max(17.75, Math.min(22.15, z));
+        x = Math.max(-3.25, Math.min(3.25, x));
+      }
+      pos.x = x; pos.z = z;
+    }
+
+    const clock = new THREE.Clock();
     window.addEventListener('resize', () => {
       camera.aspect = innerWidth / innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(innerWidth, innerHeight);
     });
 
-    // Idle drift with a gentle at-anchor sway
+    // Idle drift with gentle at-anchor sway; movement cancels the location tween.
     let idleT = 0;
     function animate() {
       requestAnimationFrame(animate);
-      idleT += 0.008;
-      if (!isDragging) yaw += Math.sin(idleT * 0.02) * 0.00018;
-      const sway = Math.sin(idleT * 0.55) * 0.006;
-      camera.position.y = 0.25 + Math.sin(idleT * 0.4) * 0.008;
+      const dt = Math.min(clock.getDelta(), 0.05);
+      idleT += dt;
+
+      let moving = false;
+      const walkSpeed = (keys.boost ? 2.4 : 1.25) * dt;
+      const forward = new THREE.Vector3(Math.sin(yaw), 0, -Math.cos(yaw));
+      const right = new THREE.Vector3(Math.cos(yaw), 0, Math.sin(yaw));
+      const step = new THREE.Vector3();
+      if (keys.forward) { step.add(forward); moving = true; }
+      if (keys.back)    { step.sub(forward); moving = true; }
+      if (keys.right)   { step.add(right); moving = true; }
+      if (keys.left)    { step.sub(right); moving = true; }
+      if (moving) {
+        targetSpot = null;
+        step.normalize().multiplyScalar(walkSpeed);
+        camera.position.add(step);
+        clampWalk(camera.position);
+      } else if (targetSpot) {
+        const dx = targetSpot.x - camera.position.x;
+        const dz = targetSpot.z - camera.position.z;
+        const dist = Math.hypot(dx, dz);
+        if (dist < 0.045) {
+          camera.position.x = targetSpot.x; camera.position.z = targetSpot.z;
+          yaw += (targetSpot.yaw - yaw) * 0.05;
+          if (Math.abs(targetSpot.yaw - yaw) < 0.01) targetSpot = null;
+        } else {
+          camera.position.x += dx * Math.min(1, dt * 2.2);
+          camera.position.z += dz * Math.min(1, dt * 2.2);
+          clampWalk(camera.position);
+        }
+      } else if (!isDragging) yaw += Math.sin(idleT * 0.35) * 0.00008;
+
+      const sway = Math.sin(idleT * 0.55) * 0.004;
+      camera.position.y = EYE_Y + Math.sin(idleT * 0.4) * 0.006;
       const q = new THREE.Quaternion();
       q.setFromEuler(new THREE.Euler(pitch, yaw, sway, 'YXZ'));
       camera.quaternion.copy(q);
