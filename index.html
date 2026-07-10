@@ -43,32 +43,43 @@
       box-shadow: 0 8px 28px rgba(0,0,0,.25);
     }
     .spotBtn:hover { background: rgba(60,45,25,0.72); }
-    #walkpad {
+    #streetNav {
       position: fixed;
-      left: 18px;
-      bottom: 24px;
-      width: 132px;
-      height: 132px;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      grid-template-rows: repeat(3, 1fr);
-      gap: 6px;
+      left: 50%;
+      bottom: 54px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 18px;
+      align-items: center;
       z-index: 5;
-      opacity: .82;
       user-select: none;
     }
-    .padBtn {
-      border: 1px solid rgba(230,200,140,0.35);
-      border-radius: 14px;
-      color: rgba(255,238,190,0.92);
-      background: rgba(8,14,20,0.48);
-      backdrop-filter: blur(8px);
-      font: 700 18px system-ui, sans-serif;
-      touch-action: none;
+    .navBtn {
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      border: 1px solid rgba(230,200,140,0.55);
+      color: rgba(255,238,190,0.96);
+      background: radial-gradient(circle at 35% 25%, rgba(255,225,155,0.28), rgba(8,14,20,0.62));
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 32px rgba(0,0,0,.36), inset 0 0 18px rgba(255,220,150,.08);
+      font: 800 28px system-ui, sans-serif;
+      cursor: pointer;
     }
-    .padBtn:active { background: rgba(190,145,65,0.55); }
-    .padEmpty { pointer-events: none; opacity: 0; }
-    @media (min-width: 800px) { #walkpad { opacity: .55; } }
+    .navBtn:active { transform: scale(.96); background: rgba(190,145,65,0.58); }
+    #nodeLabel {
+      min-width: 150px;
+      text-align: center;
+      color: rgba(255,238,190,0.95);
+      background: rgba(8,14,20,0.54);
+      border: 1px solid rgba(230,200,140,0.38);
+      border-radius: 999px;
+      padding: 10px 14px;
+      backdrop-filter: blur(8px);
+      font: 700 11px system-ui, sans-serif;
+      letter-spacing: .12em;
+      text-shadow: 0 2px 10px #000;
+    }
   </style>
 </head>
 <body>
@@ -78,12 +89,12 @@
     <button class="spotBtn" data-x="0" data-z="14.1" data-yaw="0">OWNER SUITE</button>
     <button class="spotBtn" data-x="0" data-z="20.0" data-yaw="3.1416">OPEN DECK</button>
   </div>
-  <div id="walkpad" aria-label="Walk controls">
-    <div class="padEmpty"></div><button class="padBtn" data-key="forward">▲</button><div class="padEmpty"></div>
-    <button class="padBtn" data-key="left">◀</button><button class="padBtn" data-key="boost">◆</button><button class="padBtn" data-key="right">▶</button>
-    <div class="padEmpty"></div><button class="padBtn" data-key="back">▼</button><div class="padEmpty"></div>
+  <div id="streetNav" aria-label="Street View navigation">
+    <button id="prevNode" class="navBtn" title="Previous viewpoint">‹</button>
+    <div id="nodeLabel">SALON</div>
+    <button id="nextNode" class="navBtn" title="Next viewpoint">›</button>
   </div>
-  <div id="hint">drag to look · WASD / arrows to walk · shift for speed · tap location bubbles</div>
+  <div id="hint">drag to look around · tap bubbles or arrows to jump viewpoint</div>
 
   <script type="importmap">
     {
@@ -929,17 +940,48 @@
     coveWR.position.set(3.2, hh - 0.25, 1.5);
     scene.add(coveWL, coveWR);
 
-    // ── Controls: drag-to-look + first-person walk + location bubbles ──
+    // ── Google Maps / Street View style controls ───────────────────────
 
     let yaw = 0, pitch = 0;
     let isDragging = false, lastX = 0, lastY = 0;
     const SPEED = 0.0012, PLIMIT = Math.PI / 3;
     const EYE_Y = 0.28;
-    const keys = { forward: false, back: false, left: false, right: false, boost: false };
-    let targetSpot = null;
-
     const cv = renderer.domElement;
     cv.style.cursor = 'grab';
+
+    // Fixed panorama-style viewpoints. No free-running game movement: the user
+    // looks around from a node, then taps the next bubble/arrow like Street View.
+    const nodes = [
+      { id: 'salon', label: 'SALON', x: 0, z: 1.1, yaw: 0 },
+      { id: 'passage', label: 'AFT PASSAGE', x: 0, z: 8.5, yaw: 0 },
+      { id: 'suite', label: 'OWNER SUITE', x: 0, z: 14.1, yaw: 0 },
+      { id: 'deck', label: 'OPEN DECK', x: 0, z: 20.0, yaw: 3.1416 }
+    ];
+    let currentNode = 0;
+    let targetSpot = null;
+    const nodeLabel = document.getElementById('nodeLabel');
+
+    function angleLerp(a, b, t) {
+      let d = ((b - a + Math.PI) % (Math.PI * 2)) - Math.PI;
+      return a + d * t;
+    }
+    function goToNode(i) {
+      currentNode = Math.max(0, Math.min(nodes.length - 1, i));
+      const n = nodes[currentNode];
+      targetSpot = { x: n.x, z: n.z, yaw: n.yaw, label: n.label };
+      nodeLabel.textContent = n.label;
+    }
+
+    // Sync top location bubbles to the node list.
+    document.querySelectorAll('.spotBtn').forEach((btn, i) => {
+      btn.addEventListener('click', () => goToNode(i));
+    });
+    document.getElementById('prevNode').addEventListener('click', () => goToNode(currentNode - 1));
+    document.getElementById('nextNode').addEventListener('click', () => goToNode(currentNode + 1));
+    window.addEventListener('keydown', e => {
+      if (['ArrowRight', 'ArrowUp', 'KeyW', 'KeyD', 'Space'].includes(e.code)) { e.preventDefault(); goToNode(currentNode + 1); }
+      if (['ArrowLeft', 'ArrowDown', 'KeyS', 'KeyA'].includes(e.code)) { e.preventDefault(); goToNode(currentNode - 1); }
+    });
 
     function beginLook(x, y) { isDragging = true; lastX = x; lastY = y; cv.style.cursor = 'grabbing'; }
     function moveLook(x, y) {
@@ -953,60 +995,14 @@
     window.addEventListener('mouseup', () => { isDragging = false; cv.style.cursor = 'grab'; });
     window.addEventListener('mousemove', e => moveLook(e.clientX, e.clientY));
     cv.addEventListener('touchstart', e => {
-      if (e.target.closest('#walkpad, #hotspots')) return;
+      if (e.target.closest('#streetNav, #hotspots')) return;
       beginLook(e.touches[0].clientX, e.touches[0].clientY);
     }, { passive: true });
     window.addEventListener('touchend', () => isDragging = false);
     window.addEventListener('touchmove', e => {
-      if (e.target.closest('#walkpad, #hotspots')) return;
+      if (e.target.closest('#streetNav, #hotspots')) return;
       moveLook(e.touches[0].clientX, e.touches[0].clientY);
     }, { passive: true });
-
-    function setMove(code, on) {
-      if (code === 'KeyW' || code === 'ArrowUp') keys.forward = on;
-      if (code === 'KeyS' || code === 'ArrowDown') keys.back = on;
-      if (code === 'KeyA' || code === 'ArrowLeft') keys.left = on;
-      if (code === 'KeyD' || code === 'ArrowRight') keys.right = on;
-      if (code === 'ShiftLeft' || code === 'ShiftRight') keys.boost = on;
-    }
-    window.addEventListener('keydown', e => { setMove(e.code, true); if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault(); });
-    window.addEventListener('keyup', e => setMove(e.code, false));
-
-    document.querySelectorAll('.padBtn').forEach(btn => {
-      const k = btn.dataset.key;
-      const on = e => { e.preventDefault(); keys[k] = true; targetSpot = null; };
-      const off = e => { e.preventDefault(); keys[k] = false; };
-      btn.addEventListener('pointerdown', on);
-      btn.addEventListener('pointerup', off);
-      btn.addEventListener('pointerleave', off);
-      btn.addEventListener('pointercancel', off);
-    });
-
-    document.querySelectorAll('.spotBtn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        targetSpot = { x: parseFloat(btn.dataset.x), z: parseFloat(btn.dataset.z), yaw: parseFloat(btn.dataset.yaw) };
-      });
-    });
-
-    // Soft path bounds: salon -> passage -> owner suite -> open aft deck.
-    function clampWalk(pos) {
-      let x = pos.x, z = pos.z;
-      if (z < 5.35) {                    // salon + bow
-        z = Math.max(-5.85, Math.min(5.35, z));
-        const bowLimit = z < -2.35 ? Math.sqrt(Math.max(0.2, 3.45 * 3.45 - (z + 2.35) * (z + 2.35))) : 3.45;
-        x = Math.max(-bowLimit, Math.min(bowLimit, x));
-      } else if (z < 11.35) {            // narrow aft passage
-        z = Math.max(5.35, Math.min(11.35, z));
-        x = Math.max(-1.12, Math.min(1.12, x));
-      } else if (z < 17.75) {            // owner suite
-        z = Math.max(11.35, Math.min(17.75, z));
-        x = Math.max(-2.85, Math.min(2.85, x));
-      } else {                            // open deck
-        z = Math.max(17.75, Math.min(22.15, z));
-        x = Math.max(-3.25, Math.min(3.25, x));
-      }
-      pos.x = x; pos.z = z;
-    }
 
     const clock = new THREE.Clock();
     window.addEventListener('resize', () => {
@@ -1015,44 +1011,33 @@
       renderer.setSize(innerWidth, innerHeight);
     });
 
-    // Idle drift with gentle at-anchor sway; movement cancels the location tween.
+    // Start exactly at the first Street View node.
+    camera.position.set(nodes[0].x, EYE_Y, nodes[0].z);
+    nodeLabel.textContent = nodes[0].label;
+
     let idleT = 0;
     function animate() {
       requestAnimationFrame(animate);
       const dt = Math.min(clock.getDelta(), 0.05);
       idleT += dt;
 
-      let moving = false;
-      const walkSpeed = (keys.boost ? 2.4 : 1.25) * dt;
-      const forward = new THREE.Vector3(Math.sin(yaw), 0, -Math.cos(yaw));
-      const right = new THREE.Vector3(Math.cos(yaw), 0, Math.sin(yaw));
-      const step = new THREE.Vector3();
-      if (keys.forward) { step.add(forward); moving = true; }
-      if (keys.back)    { step.sub(forward); moving = true; }
-      if (keys.right)   { step.add(right); moving = true; }
-      if (keys.left)    { step.sub(right); moving = true; }
-      if (moving) {
-        targetSpot = null;
-        step.normalize().multiplyScalar(walkSpeed);
-        camera.position.add(step);
-        clampWalk(camera.position);
-      } else if (targetSpot) {
-        const dx = targetSpot.x - camera.position.x;
-        const dz = targetSpot.z - camera.position.z;
-        const dist = Math.hypot(dx, dz);
-        if (dist < 0.045) {
-          camera.position.x = targetSpot.x; camera.position.z = targetSpot.z;
-          yaw += (targetSpot.yaw - yaw) * 0.05;
-          if (Math.abs(targetSpot.yaw - yaw) < 0.01) targetSpot = null;
-        } else {
-          camera.position.x += dx * Math.min(1, dt * 2.2);
-          camera.position.z += dz * Math.min(1, dt * 2.2);
-          clampWalk(camera.position);
+      if (targetSpot) {
+        const t = Math.min(1, dt * 2.4);
+        camera.position.x += (targetSpot.x - camera.position.x) * t;
+        camera.position.z += (targetSpot.z - camera.position.z) * t;
+        yaw = angleLerp(yaw, targetSpot.yaw, t * 0.55);
+        const dist = Math.hypot(targetSpot.x - camera.position.x, targetSpot.z - camera.position.z);
+        if (dist < 0.035) {
+          camera.position.x = targetSpot.x;
+          camera.position.z = targetSpot.z;
+          targetSpot = null;
         }
-      } else if (!isDragging) yaw += Math.sin(idleT * 0.35) * 0.00008;
+      } else if (!isDragging) {
+        yaw += Math.sin(idleT * 0.35) * 0.000045;
+      }
 
-      const sway = Math.sin(idleT * 0.55) * 0.004;
-      camera.position.y = EYE_Y + Math.sin(idleT * 0.4) * 0.006;
+      const sway = Math.sin(idleT * 0.55) * 0.003;
+      camera.position.y = EYE_Y + Math.sin(idleT * 0.4) * 0.005;
       const q = new THREE.Quaternion();
       q.setFromEuler(new THREE.Euler(pitch, yaw, sway, 'YXZ'));
       camera.quaternion.copy(q);
