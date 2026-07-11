@@ -17,7 +17,38 @@
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { overflow: hidden; background: var(--ink); color: var(--ivory); font-family: var(--sans); }
-    canvas { display: block; }
+    canvas { display: block; opacity: 0; pointer-events: none; }
+    #viewPlate {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      background-image: url('assets/gallery.png');
+      background-size: cover;
+      background-position: 50% 50%;
+      transform: scale(1.035);
+      filter: saturate(0.95) contrast(1.04) brightness(0.88);
+      transition: background-image 520ms ease, filter 520ms ease, background-position 120ms ease-out;
+    }
+    #viewPlate::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(4,3,2,.54), rgba(4,3,2,.12) 44%, rgba(4,3,2,.30)),
+        radial-gradient(circle at 50% 48%, transparent 42%, rgba(0,0,0,.38) 100%);
+    }
+    #viewPlate::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: .23;
+      mix-blend-mode: overlay;
+      background:
+        repeating-linear-gradient(0deg, rgba(255,255,255,.028) 0 1px, transparent 1px 3px),
+        repeating-linear-gradient(90deg, rgba(0,0,0,.025) 0 1px, transparent 1px 4px);
+    }
     body::before {
       content: "";
       position: fixed;
@@ -261,6 +292,7 @@
   </style>
 </head>
 <body class="pre">
+  <div id="viewPlate" aria-hidden="true"></div>
   <header id="siteHeader">
     <div id="wordmark">Cristiano <em>Lafette</em></div>
     <nav id="siteNav">
@@ -1187,14 +1219,15 @@
     // Fixed panorama-style viewpoints. No free-running game movement: the user
     // looks around from a node, then taps the next bubble/arrow like Street View.
     const nodes = [
-      { id: 'gallery', label: 'Gallery', x: 0, z: 1.1, yaw: 0 },
-      { id: 'vestibule', label: 'Vestibule', x: 0, z: 8.5, yaw: 0 },
-      { id: 'suite', label: 'Owner Suite', x: 0, z: 14.1, yaw: 0 },
-      { id: 'terrace', label: 'Terrace', x: 0, z: 20.0, yaw: 3.1416 }
+      { id: 'gallery', label: 'Gallery', x: 0, z: 1.1, yaw: 0, plate: 'assets/gallery.png' },
+      { id: 'vestibule', label: 'Vestibule', x: 0, z: 8.5, yaw: 0, plate: 'assets/vestibule.png' },
+      { id: 'suite', label: 'Owner Suite', x: 0, z: 14.1, yaw: 0, plate: 'assets/owner-suite.png' },
+      { id: 'terrace', label: 'Terrace', x: 0, z: 20.0, yaw: 3.1416, plate: 'assets/terrace.png' }
     ];
     let currentNode = 0;
     let targetSpot = null;
     const deckLinks = document.querySelectorAll('.deckLink');
+    const viewPlate = document.getElementById('viewPlate');
 
     function angleLerp(a, b, t) {
       let d = ((b - a + Math.PI) % (Math.PI * 2)) - Math.PI;
@@ -1204,6 +1237,7 @@
       currentNode = Math.max(0, Math.min(nodes.length - 1, i));
       const n = nodes[currentNode];
       targetSpot = { x: n.x, z: n.z, yaw: n.yaw, label: n.label };
+      viewPlate.style.backgroundImage = `url('${n.plate}')`;
       deckLinks.forEach((l, j) => l.classList.toggle('active', j === currentNode));
     }
 
@@ -1264,6 +1298,7 @@
 
     // Start exactly at the first Street View node.
     camera.position.set(nodes[0].x, EYE_Y, nodes[0].z);
+    viewPlate.style.backgroundImage = `url('${nodes[0].plate}')`;
 
     let idleT = 0;
     function animate() {
@@ -1288,6 +1323,9 @@
 
       const sway = Math.sin(idleT * 0.55) * 0.003;
       camera.position.y = EYE_Y + Math.sin(idleT * 0.4) * 0.005;
+      const px = 50 + Math.sin(yaw) * 2.8;
+      const py = 50 + Math.sin(pitch) * 3.2;
+      viewPlate.style.backgroundPosition = `${px}% ${py}%`;
       const q = new THREE.Quaternion();
       q.setFromEuler(new THREE.Euler(pitch, yaw, sway, 'YXZ'));
       camera.quaternion.copy(q);
