@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cristiano Lafette — Private Yacht Collection</title>
+  <title>Cristiano Lafette — Private Collection</title>
   <style>
     :root {
       --ink: #0a0908;
@@ -18,6 +18,30 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { overflow: hidden; background: var(--ink); color: var(--ivory); font-family: var(--sans); }
     canvas { display: block; }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0.28;
+      mix-blend-mode: soft-light;
+      background:
+        radial-gradient(circle at 18% 18%, rgba(255, 238, 200, .10), transparent 30%),
+        radial-gradient(circle at 76% 62%, rgba(211, 183, 135, .08), transparent 34%),
+        repeating-linear-gradient(0deg, rgba(255,255,255,.020) 0 1px, transparent 1px 3px),
+        repeating-linear-gradient(90deg, rgba(0,0,0,.026) 0 1px, transparent 1px 4px);
+    }
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at center, transparent 34%, rgba(0,0,0,.22) 68%, rgba(0,0,0,.52) 100%),
+        linear-gradient(110deg, rgba(255,255,255,.035), transparent 28%, rgba(211,183,135,.045) 58%, transparent 74%);
+    }
     button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
 
     /* ── Header ── */
@@ -29,7 +53,9 @@
       align-items: center;
       justify-content: space-between;
       padding: 26px 48px;
-      background: linear-gradient(to bottom, rgba(6, 5, 4, 0.62), rgba(6, 5, 4, 0));
+      background: linear-gradient(to bottom, rgba(6, 5, 4, 0.74), rgba(6, 5, 4, 0.12), rgba(6, 5, 4, 0));
+      backdrop-filter: blur(10px) saturate(140%);
+      -webkit-backdrop-filter: blur(10px) saturate(140%);
     }
     #wordmark {
       font-family: var(--serif);
@@ -74,7 +100,9 @@
       display: flex;
       align-items: center;
       padding: 0 8vw;
-      background: linear-gradient(100deg, rgba(6, 5, 4, 0.82) 24%, rgba(6, 5, 4, 0.38) 56%, rgba(6, 5, 4, 0) 82%);
+      background:
+        radial-gradient(circle at 18% 44%, rgba(211,183,135,.16), transparent 34%),
+        linear-gradient(100deg, rgba(6, 5, 4, 0.88) 24%, rgba(6, 5, 4, 0.46) 56%, rgba(6, 5, 4, 0.04) 84%);
       transition: opacity 1s ease, visibility 1s;
     }
     #hero.gone { opacity: 0; visibility: hidden; pointer-events: none; }
@@ -125,8 +153,9 @@
       align-items: center;
       gap: 14px;
       padding: 8px 14px;
-      background: var(--glass);
-      backdrop-filter: blur(16px);
+      background: linear-gradient(135deg, rgba(14,12,10,.72), rgba(40,32,22,.46));
+      box-shadow: 0 18px 80px rgba(0,0,0,.36), inset 0 1px 0 rgba(255,255,255,.08);
+      backdrop-filter: blur(18px) saturate(145%);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid var(--champagne-faint);
       transition: opacity 0.8s ease 0.35s;
@@ -193,8 +222,9 @@
       margin: 24px;
       padding: 60px 64px;
       text-align: center;
-      background: var(--glass);
+      background: linear-gradient(145deg, rgba(14,12,10,.78), rgba(46,36,24,.55));
       border: 1px solid var(--champagne-line);
+      box-shadow: 0 26px 100px rgba(0,0,0,.54), inset 0 1px 0 rgba(255,255,255,.08);
     }
     #conciergePanel h2 {
       font-family: var(--serif);
@@ -234,20 +264,20 @@
   <header id="siteHeader">
     <div id="wordmark">Cristiano <em>Lafette</em></div>
     <nav id="siteNav">
-      <a class="navLink" href="#">The Fleet</a>
-      <a class="navLink" href="#">Heritage</a>
-      <a class="navLink" href="#">Journal</a>
+      <a class="navLink" href="#">The Atelier</a>
+      <a class="navLink" href="#">Materials</a>
+      <a class="navLink" href="#">Houses</a>
       <button class="cta" data-concierge>Private Viewing</button>
     </nav>
   </header>
 
   <section id="hero" aria-label="Introduction">
     <div id="heroInner">
-      <p class="eyebrow">Private Yacht Collection · Hull No. I</p>
-      <h1>Sixty-two metres<br />of quiet.</h1>
-      <p class="lede">Hand-laid teak, Calacatta and polished brass, composed for a single owner and never repeated. The salon is shown here at golden hour, as she is delivered.</p>
+      <p class="eyebrow">Private Collection · Atelier Interior I</p>
+      <h1>Texture you<br />can feel.</h1>
+      <p class="lede">Silk wall panels, hand-polished Calacatta, piano lacquer and leather grain — composed as a private residence with the restraint of couture.</p>
       <div id="heroActions">
-        <button id="enterBtn" class="cta solid">Enter the Salon</button>
+        <button id="enterBtn" class="cta solid">Enter the Gallery</button>
         <button class="textLink" data-concierge>Request a private viewing</button>
       </div>
     </div>
@@ -256,21 +286,21 @@
   <div id="deckBar" aria-label="Deck plan navigation">
     <button id="prevNode" class="arrowBtn" aria-label="Previous space">‹</button>
     <nav id="deckNav">
-      <button class="deckLink active"><span>Salon</span></button>
-      <button class="deckLink"><span>Passage</span></button>
+      <button class="deckLink active"><span>Gallery</span></button>
+      <button class="deckLink"><span>Vestibule</span></button>
       <button class="deckLink"><span>Owner Suite</span></button>
-      <button class="deckLink"><span>Aft Deck</span></button>
+      <button class="deckLink"><span>Terrace</span></button>
     </nav>
     <button id="nextNode" class="arrowBtn" aria-label="Next space">›</button>
   </div>
-  <p id="hint">Drag to look — select a space to move through her</p>
+  <p id="hint">Drag to look — select a room to move through the collection</p>
 
   <div id="concierge" hidden>
     <div id="conciergePanel" role="dialog" aria-modal="true" aria-label="Private viewings">
       <button id="conciergeClose" aria-label="Close">×</button>
       <p class="eyebrow">Concierge</p>
       <h2>Private Viewings</h2>
-      <p class="body">Each Cristiano Lafette yacht is shown by appointment only — aboard, at anchor, in Monaco, Porto Cervo or Palm Beach. Our concierge will arrange the rest.</p>
+      <p class="body">Each Cristiano Lafette interior is presented by appointment only — in Monaco, Milan, Palm Beach or by private digital viewing. Our concierge will arrange the rest.</p>
       <a class="cta solid" href="mailto:concierge@cristianolafette.com">Contact the Concierge</a>
     </div>
   </div>
@@ -386,86 +416,47 @@
       return t;
     }
 
-    // Sunset ocean panorama for the bow windows
+    // Warm abstract exterior glow for tinted architectural glass
     function oceanTex() {
       const c = document.createElement('canvas');
       c.width = 2048; c.height = 512;
       const ctx = c.getContext('2d');
-      const HOR = 300;
+      const bg = ctx.createLinearGradient(0, 0, 0, 512);
+      bg.addColorStop(0, '#b8aa92');
+      bg.addColorStop(0.38, '#eee0bf');
+      bg.addColorStop(0.55, '#c89f61');
+      bg.addColorStop(1, '#2a241c');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, 2048, 512);
 
-      const sky = ctx.createLinearGradient(0, 0, 0, HOR);
-      sky.addColorStop(0, '#274a72');
-      sky.addColorStop(0.5, '#7fa3c2');
-      sky.addColorStop(0.85, '#f0b071');
-      sky.addColorStop(1, '#ffd9a2');
-      ctx.fillStyle = sky;
-      ctx.fillRect(0, 0, 2048, HOR);
-
-      // sun and glow
-      const glow = ctx.createRadialGradient(1024, HOR - 14, 8, 1024, HOR - 14, 220);
-      glow.addColorStop(0, 'rgba(255,240,210,0.95)');
-      glow.addColorStop(0.25, 'rgba(255,190,110,0.5)');
-      glow.addColorStop(1, 'rgba(255,160,60,0)');
+      // soft backlit glow, like privacy glass catching late-day light
+      const glow = ctx.createRadialGradient(1050, 245, 12, 1050, 245, 380);
+      glow.addColorStop(0, 'rgba(255,245,210,0.9)');
+      glow.addColorStop(0.22, 'rgba(220,174,100,0.34)');
+      glow.addColorStop(1, 'rgba(220,174,100,0)');
       ctx.fillStyle = glow;
-      ctx.fillRect(0, 0, 2048, HOR + 40);
-      ctx.beginPath();
-      ctx.arc(1024, HOR - 26, 34, 0, Math.PI * 2);
-      ctx.fillStyle = '#fff3da';
-      ctx.fill();
+      ctx.fillRect(0, 0, 2048, 512);
 
-      // soft clouds
-      for (let i = 0; i < 26; i++) {
-        const cy = 30 + Math.random() * (HOR - 90);
-        ctx.fillStyle = `rgba(255,225,195,${0.05 + Math.random() * 0.12})`;
-        ctx.beginPath();
-        ctx.ellipse(Math.random() * 2048, cy, 60 + Math.random() * 160, 6 + Math.random() * 14, 0, 0, Math.PI * 2);
-        ctx.fill();
+      // blurred architecture / landscape silhouettes, deliberately non-nautical
+      ctx.fillStyle = 'rgba(30,26,22,0.16)';
+      for (let i = 0; i < 12; i++) {
+        const x = i * 190 + Math.random() * 90;
+        const h = 35 + Math.random() * 130;
+        ctx.fillRect(x, 292 - h, 80 + Math.random() * 180, h);
       }
-
-      // distant islands
-      ctx.fillStyle = 'rgba(40,55,75,0.75)';
-      ctx.beginPath();
-      ctx.ellipse(320, HOR, 130, 16, 0, Math.PI, 0);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.ellipse(1760, HOR, 90, 10, 0, Math.PI, 0);
-      ctx.fill();
-
-      // sea
-      const sea = ctx.createLinearGradient(0, HOR, 0, 512);
-      sea.addColorStop(0, '#c98a55');
-      sea.addColorStop(0.12, '#3f6a86');
-      sea.addColorStop(1, '#142e44');
-      ctx.fillStyle = sea;
-      ctx.fillRect(0, HOR, 2048, 512 - HOR);
-
-      // wave shimmer
-      for (let i = 0; i < 700; i++) {
-        const y = HOR + Math.pow(Math.random(), 1.6) * (512 - HOR);
-        const w = 4 + Math.random() * (y - HOR) * 0.35;
-        ctx.fillStyle = `rgba(200,225,240,${0.04 + Math.random() * 0.1})`;
-        ctx.fillRect(Math.random() * 2048, y, w, 1.2);
+      ctx.fillStyle = 'rgba(255,255,255,0.08)';
+      for (let i = 0; i < 120; i++) {
+        const y = 120 + Math.random() * 270;
+        ctx.fillRect(Math.random() * 2048, y, 18 + Math.random() * 120, 1 + Math.random() * 3);
       }
-      // sun glitter path
-      for (let i = 0; i < 240; i++) {
-        const y = HOR + Math.pow(Math.random(), 1.4) * (512 - HOR);
-        const spread = 40 + (y - HOR) * 0.55;
-        ctx.fillStyle = `rgba(255,215,150,${0.12 + Math.random() * 0.3})`;
-        ctx.fillRect(1024 + (Math.random() - 0.5) * spread, y, 3 + Math.random() * 10, 1.4);
+      // horizontal fluted-glass scan lines
+      for (let y = 0; y < 512; y += 9) {
+        ctx.fillStyle = y % 18 === 0 ? 'rgba(255,255,255,.055)' : 'rgba(0,0,0,.035)';
+        ctx.fillRect(0, y, 2048, 1);
       }
-
-      // gulls
-      ctx.strokeStyle = 'rgba(30,40,55,0.7)';
-      ctx.lineWidth = 1.6;
-      [[520, 120], [575, 100], [1420, 150]].forEach(([gx, gy]) => {
-        ctx.beginPath();
-        ctx.moveTo(gx - 9, gy);
-        ctx.quadraticCurveTo(gx - 4, gy - 6, gx, gy);
-        ctx.quadraticCurveTo(gx + 4, gy - 6, gx + 9, gy);
-        ctx.stroke();
-      });
-
-      return new THREE.CanvasTexture(c);
+      const t = new THREE.CanvasTexture(c);
+      t.colorSpace = THREE.SRGBColorSpace;
+      return t;
     }
 
     // Small sky/sea view for portholes
@@ -493,7 +484,7 @@
       return new THREE.CanvasTexture(c);
     }
 
-    // Framed nautical chart
+    // Framed abstract study
     function chartTex() {
       const c = document.createElement('canvas');
       c.width = 512; c.height = 384;
@@ -587,6 +578,64 @@
       return new THREE.CanvasTexture(c);
     }
 
+
+    // Fine tactile surfaces for a less-nautical, more residential luxury read
+    function linenTex(base = '#f1eadc', thread = 'rgba(120,96,64,0.18)') {
+      const c = document.createElement('canvas');
+      c.width = c.height = 512;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = base;
+      ctx.fillRect(0, 0, 512, 512);
+      for (let i = 0; i < 512; i += 3) {
+        ctx.strokeStyle = i % 9 === 0 ? 'rgba(255,255,255,.16)' : thread;
+        ctx.lineWidth = 0.55;
+        ctx.beginPath(); ctx.moveTo(i + Math.random()*1.5, 0); ctx.lineTo(i - 3 + Math.random()*6, 512); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, i + Math.random()*1.5); ctx.lineTo(512, i - 3 + Math.random()*6); ctx.stroke();
+      }
+      for (let n = 0; n < 2600; n++) {
+        const v = 210 + Math.random() * 38 | 0;
+        ctx.fillStyle = `rgba(${v},${v-8},${v-24},${0.018 + Math.random()*0.035})`;
+        ctx.fillRect(Math.random()*512, Math.random()*512, 1, 1);
+      }
+      const t = new THREE.CanvasTexture(c);
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.repeat.set(3, 2);
+      return t;
+    }
+    function leatherTex() {
+      const c = document.createElement('canvas');
+      c.width = c.height = 512;
+      const ctx = c.getContext('2d');
+      const g = ctx.createLinearGradient(0,0,512,512);
+      g.addColorStop(0,'#111826'); g.addColorStop(.45,'#1c2940'); g.addColorStop(1,'#0b111c');
+      ctx.fillStyle = g; ctx.fillRect(0,0,512,512);
+      for (let i=0;i<1400;i++) {
+        ctx.strokeStyle = `rgba(255,255,255,${0.018+Math.random()*0.045})`;
+        ctx.lineWidth = Math.random()*1.2;
+        const x=Math.random()*512, y=Math.random()*512;
+        ctx.beginPath(); ctx.arc(x,y,2+Math.random()*7,0,Math.PI*2); ctx.stroke();
+      }
+      const t = new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(2.5,2.5); return t;
+    }
+    function travertineTex() {
+      const c=document.createElement('canvas'); c.width=c.height=512;
+      const ctx=c.getContext('2d'); ctx.fillStyle='#cdbf9f'; ctx.fillRect(0,0,512,512);
+      for (let y=0;y<512;y+=4) {
+        ctx.fillStyle=`rgba(${150+Math.random()*60|0},${132+Math.random()*52|0},${96+Math.random()*44|0},${0.08+Math.random()*0.12})`;
+        ctx.fillRect(0,y,512,1+Math.random()*2);
+      }
+      for (let i=0;i<120;i++) { ctx.fillStyle='rgba(70,48,28,.10)'; ctx.fillRect(Math.random()*512, Math.random()*512, 20+Math.random()*90, 1); }
+      const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(3,1.5); return t;
+    }
+    function flutedGlassTex() {
+      const c=document.createElement('canvas'); c.width=c.height=256;
+      const ctx=c.getContext('2d');
+      const g=ctx.createLinearGradient(0,0,0,256); g.addColorStop(0,'#f6efe1'); g.addColorStop(.5,'#8ea1a5'); g.addColorStop(1,'#2b3031');
+      ctx.fillStyle=g; ctx.fillRect(0,0,256,256);
+      for(let x=0;x<256;x+=10){ctx.fillStyle=x%20===0?'rgba(255,255,255,.22)':'rgba(0,0,0,.13)'; ctx.fillRect(x,0,3,256)}
+      const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; return t;
+    }
+
     // Abstract sunset-over-water canvas for the framed art
     function artTex() {
       const c = document.createElement('canvas');
@@ -622,25 +671,29 @@
     const calaTex   = marbleTex('#f2eee6', 'rgba(196,188,170,0.20)', 'rgba(138,130,114,0.5)');
     const onyxTex   = marbleTex('#191410', 'rgba(96,68,32,0.18)', 'rgba(214,168,88,0.55)');
     const paintTex  = artTex();
+    const linenWallTex = linenTex();
+    const leatherMap = leatherTex();
+    const travTex = travertineTex();
+    const flutedTex = flutedGlassTex();
 
     // Varnished teak: clearcoat gives the lacquered-wood sheen over the grain
-    const mTeakF  = new THREE.MeshPhysicalMaterial({ map: floorTex, roughness: 0.2, metalness: 0, clearcoat: 0.95, clearcoatRoughness: 0.1, envMapIntensity: 1.05 });
+    const mTeakF  = new THREE.MeshPhysicalMaterial({ map: floorTex, roughness: 0.16, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.08, envMapIntensity: 1.15 });
     const mTeak   = new THREE.MeshPhysicalMaterial({ map: wtex, roughness: 0.42, metalness: 0, clearcoat: 0.55, clearcoatRoughness: 0.28, envMapIntensity: 0.75 });
-    const mPanel  = new THREE.MeshPhysicalMaterial({ map: panelTex, roughness: 0.48, metalness: 0, clearcoat: 0.45, clearcoatRoughness: 0.32, envMapIntensity: 0.65 });
+    const mPanel  = new THREE.MeshPhysicalMaterial({ color: 0x0d0a08, map: travTex, roughness: 0.22, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.08, envMapIntensity: 1.0 });
     // Cream lacquer hull panels: clearcoat sheen instead of flat matte
-    const mHull   = new THREE.MeshPhysicalMaterial({ color: 0xf4eedd, roughness: 0.42, clearcoat: 0.6, clearcoatRoughness: 0.22, envMapIntensity: 0.55, side: THREE.DoubleSide });
+    const mHull   = new THREE.MeshPhysicalMaterial({ color: 0xf4eedd, map: linenWallTex, roughness: 0.62, clearcoat: 0.35, clearcoatRoughness: 0.24, envMapIntensity: 0.6, side: THREE.DoubleSide });
     const mCeil   = new THREE.MeshStandardMaterial({ color: 0xfaf6ee, roughness: 0.95, envMapIntensity: 0.3 });
     // Polished brass: full metalness, tight roughness — lives off the envmap
     const mBrass  = new THREE.MeshPhysicalMaterial({ color: 0xc9a232, roughness: 0.16, metalness: 1.0, envMapIntensity: 1.25 });
     const mBrassS = new THREE.MeshPhysicalMaterial({ color: 0xc5a24a, roughness: 0.38, metalness: 0.9, envMapIntensity: 1.0 });
     // Upholstery: sheen for the fabric-fuzz rim light
-    const mCream  = new THREE.MeshPhysicalMaterial({ color: 0xf6f1e6, roughness: 0.9, sheen: 0.6, sheenRoughness: 0.55, sheenColor: 0xfff2d8, envMapIntensity: 0.35 });
-    const mNavy   = new THREE.MeshPhysicalMaterial({ color: 0x16263e, roughness: 0.92, sheen: 0.8, sheenRoughness: 0.5, sheenColor: 0x4a6a9a, envMapIntensity: 0.3 });
-    const mRope   = new THREE.MeshStandardMaterial({ color: 0xcbb188, roughness: 1 });
+    const mCream  = new THREE.MeshPhysicalMaterial({ color: 0xf6f1e6, map: linenWallTex, roughness: 0.88, sheen: 0.95, sheenRoughness: 0.42, sheenColor: 0xfff2d8, envMapIntensity: 0.38 });
+    const mNavy   = new THREE.MeshPhysicalMaterial({ color: 0x0e1520, map: leatherMap, roughness: 0.58, clearcoat: 0.35, clearcoatRoughness: 0.18, sheen: 0.55, sheenRoughness: 0.38, sheenColor: 0x526b8f, envMapIntensity: 0.55 });
+    const mRope   = new THREE.MeshStandardMaterial({ color: 0xb79b70, roughness: 0.92 });
     const mGlass  = new THREE.MeshPhysicalMaterial({ color: 0xbcd8e8, roughness: 0.04, metalness: 0, opacity: 0.13, transparent: true, envMapIntensity: 1.6, side: THREE.DoubleSide });
     const mGlassW = new THREE.MeshPhysicalMaterial({ color: 0xf4fbff, roughness: 0.05, metalness: 0, transmission: 1, thickness: 0.05, ior: 1.5, envMapIntensity: 1.2 });
     const mSea    = new THREE.MeshBasicMaterial({ map: seaTex, side: THREE.DoubleSide });
-    const mPort   = new THREE.MeshBasicMaterial({ map: portTex });
+    const mPort   = new THREE.MeshPhysicalMaterial({ map: flutedTex, color: 0xd9d4c8, roughness: 0.18, transmission: 0.45, thickness: 0.08, transparent: true, opacity: 0.72, envMapIntensity: 1.0 });
     const mChart  = new THREE.MeshStandardMaterial({ map: mapTex, roughness: 0.85 });
     const mShade  = new THREE.MeshStandardMaterial({ color: 0xe8d9b0, roughness: 0.85, emissive: new THREE.Color(0x8a6828), emissiveIntensity: 0.6 });
     const mDownlt = new THREE.MeshStandardMaterial({ color: 0xfff0d0, emissive: new THREE.Color(0xffd890), emissiveIntensity: 1.4 });
@@ -648,7 +701,7 @@
     const mMarble = new THREE.MeshPhysicalMaterial({ map: calaTex, roughness: 0.1, clearcoat: 1, clearcoatRoughness: 0.06, envMapIntensity: 1.15 });
     const mOnyx   = new THREE.MeshPhysicalMaterial({ map: onyxTex, roughness: 0.08, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 1.4 });
     const mChrome = new THREE.MeshPhysicalMaterial({ color: 0xf4f6f8, metalness: 1, roughness: 0.07, envMapIntensity: 1.5 });
-    const mGold   = new THREE.MeshPhysicalMaterial({ color: 0xd8b478, roughness: 0.85, sheen: 1, sheenRoughness: 0.4, sheenColor: 0xffe8b0, envMapIntensity: 0.4 });
+    const mGold   = new THREE.MeshPhysicalMaterial({ color: 0xcaa66a, map: linenWallTex, roughness: 0.78, sheen: 1, sheenRoughness: 0.32, sheenColor: 0xffe8b0, envMapIntensity: 0.48 });
     const mLED    = new THREE.MeshStandardMaterial({ color: 0xffe9c8, emissive: new THREE.Color(0xffc987), emissiveIntensity: 2.4 });
     const mBottle = new THREE.MeshPhysicalMaterial({ color: 0x1e3c26, roughness: 0.06, clearcoat: 1, clearcoatRoughness: 0.04, envMapIntensity: 1.3 });
     const mAmber  = new THREE.MeshPhysicalMaterial({ color: 0x9a4e10, roughness: 0.05, metalness: 0, transmission: 0.85, thickness: 0.12, ior: 1.45, envMapIntensity: 1.2 });
@@ -813,6 +866,12 @@
     // Warm LED strip glowing under the settee lip
     const seatLED = arcBand(3.05, 0.03, F + 0.34, mLED, BOWC);
     seatLED.castShadow = false;
+    // Fine fluted shadow ribs on the curved silk panels — visible texture, not decoration
+    for (let i = 0; i <= 18; i++) {
+      const th = Math.PI / 2 + (i / 18) * Math.PI;
+      box(0.012, 0.82, 0.018, mSeam,
+        3.86 * Math.sin(th), F + 0.34, BOWC + 3.86 * Math.cos(th), th);
+    }
 
     // Round rug and pedestal cocktail table at the bow
     cyl(1.5, 1.5, 0.02, 40, mCream, 0, F + 0.045, BOWC - 1.6);
@@ -935,45 +994,42 @@
     cyl(0.006, 0.006, 0.2, 6, new THREE.MeshStandardMaterial({ color: 0x3e5c33, roughness: 1 }), -3.62, F + 1.06, 2.87, 0.15, 0.1);
     sph(0.025, new THREE.MeshStandardMaterial({ color: 0xc23a4a, roughness: 0.8 }), -3.66, F + 1.16, 2.9);
 
-    // Framed nautical chart above the console
+    // Framed abstract study above the console
     box(1.2, 0.85, 0.03, mChart, -hw + 0.08, 0.55, 2.4, Math.PI / 2);
     box(0.03, 0.93, 0.06, mBrass, -hw + 0.07, 0.55, 2.4 - 0.62, Math.PI / 2);
     box(0.03, 0.93, 0.06, mBrass, -hw + 0.07, 0.55, 2.4 + 0.62, Math.PI / 2);
     box(1.28, 0.04, 0.06, mBrass, -hw + 0.07, 0.99, 2.4, Math.PI / 2);
     box(1.28, 0.04, 0.06, mBrass, -hw + 0.07, 0.11, 2.4, Math.PI / 2);
 
-    // ── Aft bulkhead: ship's wheel, clock, trim ───────────────────────────
+    // ── Aft bulkhead: abstract atelier panels, clock, trim ───────────────
 
     box(0.04, RH - 0.3, 0.04, mBrass, -1.35, 0, STERN - 0.08);
     box(0.04, RH - 0.3, 0.04, mBrass,  1.35, 0, STERN - 0.08);
 
-    // Ship's wheel
-    const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.035, 12, 40), mTeak);
-    wheel.position.set(0, 0.3, STERN - 0.14);
-    wheel.castShadow = true;
-    scene.add(wheel);
-    for (let i = 0; i < 8; i++) {
-      const a = (i / 8) * Math.PI * 2;
-      cyl(0.018, 0.018, 1.06, 8, mTeak, 0, 0.3, STERN - 0.14, 0, a + Math.PI / 2);
-      sph(0.028, mBrassS, Math.cos(a) * 0.53, 0.3 + Math.sin(a) * 0.53, STERN - 0.14);
-    }
-    cyl(0.07, 0.07, 0.07, 16, mBrass, 0, 0.3, STERN - 0.14, Math.PI / 2);
+    // Triptych of tactile material panels instead of nautical decoration
+    box(0.72, 0.9, 0.035, mOnyx, -0.72, 0.32, STERN - 0.145);
+    box(0.72, 0.9, 0.035, mMarble, 0, 0.32, STERN - 0.15);
+    box(0.72, 0.9, 0.035, mNavy, 0.72, 0.32, STERN - 0.145);
+    [-0.72, 0, 0.72].forEach(x => {
+      box(0.78, 0.025, 0.045, mBrass, x, 0.79, STERN - 0.17);
+      box(0.78, 0.025, 0.045, mBrass, x, -0.15, STERN - 0.17);
+      box(0.025, 0.94, 0.045, mBrass, x - 0.39, 0.32, STERN - 0.17);
+      box(0.025, 0.94, 0.045, mBrass, x + 0.39, 0.32, STERN - 0.17);
+    });
 
-    // Ship's clock (brass bezel, white face, hands)
+    // Sculptural clock / objet d'art
     cyl(0.17, 0.17, 0.05, 24, mBrass, 2.2, 0.45, STERN - 0.1, Math.PI / 2);
     cyl(0.135, 0.135, 0.052, 24, mWhiteF, 2.2, 0.45, STERN - 0.11, Math.PI / 2);
     box(0.014, 0.1, 0.012, mNavy, 2.2, 0.49, STERN - 0.145);
     box(0.075, 0.014, 0.012, mNavy, 2.23, 0.45, STERN - 0.145);
 
-    // Life ring on the aft wall
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.26, 0.06, 12, 32), mWhiteF);
-    ring.position.set(-2.2, 0.45, STERN - 0.12);
-    ring.castShadow = true;
-    scene.add(ring);
-    for (let i = 0; i < 4; i++) {
-      const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
-      box(0.13, 0.13, 0.125, mNavy, -2.2 + Math.cos(a) * 0.26, 0.45 + Math.sin(a) * 0.26, STERN - 0.12);
-    }
+    // Stone plinth with a cast-metal sculpture
+    box(0.52, 0.42, 0.2, mMarble, -2.2, -0.1, STERN - 0.14);
+    const sculpture = new THREE.Mesh(new THREE.TorusKnotGeometry(0.14, 0.025, 80, 10), mBrassS);
+    sculpture.position.set(-2.2, 0.22, STERN - 0.14);
+    sculpture.rotation.set(0.8, 0.4, 0.2);
+    sculpture.castShadow = true;
+    scene.add(sculpture);
 
 
     // ── Walkable aft ship extension: passage, owner suite, open deck ───────
@@ -993,7 +1049,7 @@
       scene.add(sign);
     }
 
-    // Aft passage — narrower yacht corridor with portholes and LED toe-kicks
+    // Textured vestibule — silk walls, fluted glass and LED toe-kicks
     box(3.0, 0.06, 6.0, mTeakF, 0, F, 8.4);
     box(3.0, 0.06, 6.0, mCeil, 0, hh, 8.4);
     box(0.08, RH, 6.0, mHull, -1.5, 0, 8.4);
@@ -1006,7 +1062,7 @@
     box(2.1, 0.04, 0.08, mBrass, 0, 0.9, 11.25);
     addDoorLabel('OWNER SUITE', 0, 0.96, 11.22);
 
-    // Owner suite: larger private lounge forward of a bed wall, with ocean glass
+    // Owner suite: private lounge with panoramic glass and layered tactile finishes
     box(6.6, 0.06, 6.2, mTeakF, 0, F, 14.55);
     box(6.6, 0.06, 6.2, mCeil, 0, hh, 14.55);
     box(0.08, RH, 6.2, mHull, -3.3, 0, 14.55);
@@ -1029,7 +1085,7 @@
     [13.2, 15.3].forEach(z => { porthole(-1, z); porthole(1, z); });
     addDoorLabel('PRIVATE AFT DECK', 0, 0.95, 17.45);
 
-    // Open aft deck with rails, loungers and sea beyond — reachable by walking through suite glass line
+    // Open terrace with rails, loungers and sea beyond — reachable by walking through suite glass line
     box(7.4, 0.06, 4.6, mTeakF, 0, F, 20.25);
     box(0.08, 0.9, 4.4, mBrass, -3.65, F + 0.45, 20.25);
     box(0.08, 0.9, 4.4, mBrass,  3.65, F + 0.45, 20.25);
@@ -1083,11 +1139,11 @@
     bowP.position.set(0, hh - 0.65, BOWC - 1.6);
     scene.add(bowP);
 
-    // Sunset spilling through the bow windows
+    // Warm exterior glow through the architectural glass
     const sun = new THREE.PointLight(0xffb070, 1.5, 11);
     sun.position.set(0, 0.4, BOWC - 2.6);
     scene.add(sun);
-    const skyFill = new THREE.PointLight(0x86a8c8, 0.55, 9);
+    const skyFill = new THREE.PointLight(0xcbb38c, 0.5, 9);
     skyFill.position.set(0, 1.0, BOWC - 1.0);
     scene.add(skyFill);
 
@@ -1131,10 +1187,10 @@
     // Fixed panorama-style viewpoints. No free-running game movement: the user
     // looks around from a node, then taps the next bubble/arrow like Street View.
     const nodes = [
-      { id: 'salon', label: 'Salon', x: 0, z: 1.1, yaw: 0 },
-      { id: 'passage', label: 'Passage', x: 0, z: 8.5, yaw: 0 },
+      { id: 'gallery', label: 'Gallery', x: 0, z: 1.1, yaw: 0 },
+      { id: 'vestibule', label: 'Vestibule', x: 0, z: 8.5, yaw: 0 },
       { id: 'suite', label: 'Owner Suite', x: 0, z: 14.1, yaw: 0 },
-      { id: 'deck', label: 'Aft Deck', x: 0, z: 20.0, yaw: 3.1416 }
+      { id: 'terrace', label: 'Terrace', x: 0, z: 20.0, yaw: 3.1416 }
     ];
     let currentNode = 0;
     let targetSpot = null;
