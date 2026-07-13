@@ -264,44 +264,44 @@
   <header id="siteHeader">
     <div id="wordmark">Cristiano <em>Lafette</em></div>
     <nav id="siteNav">
-      <a class="navLink" href="#">The Atelier</a>
+      <a class="navLink" href="#">Story</a>
       <a class="navLink" href="#">Materials</a>
-      <a class="navLink" href="#">Houses</a>
-      <button class="cta" data-concierge>Private Viewing</button>
+      <a class="navLink" href="#">Private spaces</a>
+      <button class="cta" data-concierge>Book a viewing</button>
     </nav>
   </header>
 
   <section id="hero" aria-label="Introduction">
     <div id="heroInner">
-      <p class="eyebrow">Private Collection · Atelier Interior I</p>
-      <h1>Texture you<br />can feel.</h1>
-      <p class="lede">Silk wall panels, hand-polished Calacatta, piano lacquer and leather grain — composed as a private residence with the restraint of couture.</p>
+      <p class="eyebrow">Cristiano Lafette private interiors</p>
+      <h1>A private room<br />that feels real.</h1>
+      <p class="lede">Step through a warm, quiet interior built around real materials: stone, leather, glass, brass and soft light. Move from room to room, then drag to look around.</p>
       <div id="heroActions">
-        <button id="enterBtn" class="cta solid">Enter the Gallery</button>
-        <button class="textLink" data-concierge>Request a private viewing</button>
+        <button id="enterBtn" class="cta solid">Start the tour</button>
+        <button class="textLink" data-concierge>Talk to concierge</button>
       </div>
     </div>
   </section>
 
   <div id="deckBar" aria-label="Deck plan navigation">
-    <button id="prevNode" class="arrowBtn" aria-label="Previous space">‹</button>
+    <button id="prevNode" class="arrowBtn" aria-label="Previous room">‹</button>
     <nav id="deckNav">
-      <button class="deckLink active"><span>Gallery</span></button>
-      <button class="deckLink"><span>Vestibule</span></button>
-      <button class="deckLink"><span>Owner Suite</span></button>
+      <button class="deckLink active"><span>Main room</span></button>
+      <button class="deckLink"><span>Hall</span></button>
+      <button class="deckLink"><span>Suite</span></button>
       <button class="deckLink"><span>Terrace</span></button>
     </nav>
-    <button id="nextNode" class="arrowBtn" aria-label="Next space">›</button>
+    <button id="nextNode" class="arrowBtn" aria-label="Next room">›</button>
   </div>
-  <p id="hint">Drag to look — select a room to move through the collection</p>
+  <p id="hint">Drag to look around. Choose a room to move.</p>
 
   <div id="concierge" hidden>
-    <div id="conciergePanel" role="dialog" aria-modal="true" aria-label="Private viewings">
+    <div id="conciergePanel" role="dialog" aria-modal="true" aria-label="Book a private viewing">
       <button id="conciergeClose" aria-label="Close">×</button>
       <p class="eyebrow">Concierge</p>
-      <h2>Private Viewings</h2>
-      <p class="body">Each Cristiano Lafette interior is presented by appointment only — in Monaco, Milan, Palm Beach or by private digital viewing. Our concierge will arrange the rest.</p>
-      <a class="cta solid" href="mailto:concierge@cristianolafette.com">Contact the Concierge</a>
+      <h2>Book a private viewing</h2>
+      <p class="body">We'll walk you through the space privately and answer questions as you go. You can book a digital viewing or arrange to see it in person.</p>
+      <a class="cta solid" href="mailto:concierge@cristianolafette.com">Contact concierge</a>
     </div>
   </div>
 
@@ -1269,9 +1269,9 @@
     // Fixed panorama-style viewpoints. No free-running game movement: the user
     // looks around from a node, then taps the next bubble/arrow like Street View.
     const nodes = [
-      { id: 'gallery', label: 'Gallery', x: 0, z: 2.65, yaw: 0 },
-      { id: 'vestibule', label: 'Vestibule', x: 0, z: 8.5, yaw: 0 },
-      { id: 'suite', label: 'Owner Suite', x: 0.15, z: 14.55, yaw: -1.5708 },
+      { id: 'gallery', label: 'Main room', x: 0, z: 2.65, yaw: 0 },
+      { id: 'vestibule', label: 'Hall', x: 0, z: 8.5, yaw: 0 },
+      { id: 'suite', label: 'Suite', x: 0.15, z: 14.55, yaw: -1.5708 },
       { id: 'terrace', label: 'Terrace', x: 0, z: 20.0, yaw: 3.1416 }
     ];
     let currentNode = 0;
